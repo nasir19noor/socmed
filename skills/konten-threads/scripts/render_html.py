@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Render desain HTML/SVG bebas (ditulis agen) menjadi PNG 1080x1350.
 
-  jalankan render_html --html /path/desain.html --out /path/hasil.png
+  jalankan render_html --html /path/desain.html --out /path/hasil.png --arah "koran"
 
 Desain harus satu file HTML mandiri (CSS & SVG di dalam file). Lihat referensi/desain-bebas.md.
 Skrip menolak desain yang memuat gambar/skrip dari luar (kecuali Google Fonts) dan memperingatkan
-jika isi halaman melebihi kanvas 1080x1350.
+jika isi halaman melebihi kanvas 1080x1350. --arah mencatat arah seni yang dipakai (ragam.py),
+agar desain berikutnya memilih arah lain.
 """
 import argparse
 import os
@@ -15,6 +16,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import ragam  # noqa: E402
 from render_visual import render_chrome  # noqa: E402
 
 LEBAR, TINGGI = 1080, 1350
@@ -65,6 +67,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--html", required=True, help="File HTML desain")
     ap.add_argument("--out", required=True, help="File PNG keluaran")
+    ap.add_argument("--arah", default="", help="Arah seni desain ini, mis. 'koran' (lihat: jalankan ragam --saran)")
     a = ap.parse_args()
 
     src = Path(os.path.expanduser(a.html)).resolve()
@@ -83,6 +86,8 @@ def main():
         hp.write_text(html, encoding="utf-8")
         if not (render_playwright(hp, out) or render_chrome(hp, out)):
             sys.exit("Gagal render. Pasang playwright di venv: pip install playwright && python -m playwright install chromium")
+    if a.arah:
+        ragam.catat("arah", a.arah.strip().lower())
     print(out)
 
 

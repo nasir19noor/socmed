@@ -21,13 +21,14 @@ skills/konten-threads/          the OpenClaw skill — copied to ~/.openclaw/wor
   referensi/sumber-tren.md      where to research trends
   referensi/gaya-bahasa.md      the account's voice, hook and thread patterns
   referensi/contoh-postingan.md the owner's real posts (style reference; edited by contoh.py)
-  referensi/desain-bebas.md     rules for free-form HTML/SVG visuals
-  templates/visual.html         standard 1080×1350 card template
+  referensi/desain-bebas.md     free-form HTML/SVG visuals: art-direction menu, fonts, rules
+  templates/visual.html         1080×1350 template with 7 layouts (body class tata-*)
   scripts/jalankan              bash entry point: runs <script>.py with the venv's Python
   scripts/antrian.py            per-day queue of proposals and approvals (JSON)
   scripts/post_threads.py       posts the approved option to the Threads API
   scripts/render_visual.py      template card → PNG (Playwright, Chrome fallback)
   scripts/render_html.py        agent-written HTML/SVG → PNG, with safety checks
+  scripts/ragam.py              visual style memory (ragam.json) so images don't look alike
   scripts/contoh.py             add / list / remove style examples
 pasang.sh                       installs/updates the skill on the host, filling in the owner's number
 cron-setup.sh                   registers the 6 OpenClaw cron jobs (WIB)
@@ -90,11 +91,17 @@ approved / already posted / skipped, **1** error. `--dry-run` simulates,
 `--cek` checks the token and prints the user id, `--refresh-token` extends
 the 60-day long-lived token.
 
-**Rendering**: `render_visual.py` fills `templates/visual.html` (palette per
-`kategori`, `*accent*` in titles, `--poin` list, `--gaya kutipan`);
-`render_html.py` renders an agent-written HTML file and **rejects external
-resources** except Google Fonts, and warns when content overflows
-1080×1350. Both try Playwright first, then a system Chrome/Chromium.
+**Rendering**: `render_visual.py` fills `templates/visual.html`: 7 layouts
+(kartu, poster, split, catatan, gelap, bingkai, majalah), 7 font pairings and
+3 palette variants per `kategori`; `*accent*` in titles, `--poin` list,
+`--angka` big stat, `--gaya kutipan`. Layout, font and palette default to
+`auto` = least recently used, recorded in `ragam.json` (next to the queue
+folder) by `ragam.py`. `render_html.py` renders an agent-written HTML file,
+**rejects external resources** except Google Fonts, warns when content
+overflows 1080×1350, and records the art direction (`--arah`) so the next
+free design picks another (`jalankan ragam --saran`). Both try Playwright
+first, then a system Chrome/Chromium/Edge (Linux, macOS, Windows paths).
+Goal: no two consecutive visuals look alike — don't hard-code a single look.
 
 **Accounts**: several Threads accounts, one approver (the owner), one voice.
 `utama` uses `THREADS_USER_ID` / `THREADS_ACCESS_TOKEN` / `THREADS_HANDLE`;

@@ -3,71 +3,142 @@
 <head>
 <meta charset="utf-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+<link href="{{FONT_URL}}" rel="stylesheet">
 <style>
-  :root { --aksen: {{AKSEN}}; --aksen-muda: {{AKSEN_MUDA}}; --dasar: {{DASAR}}; }
+  /* Satu template, banyak wajah: tata letak = kelas body (tata-*), palet & font = variabel CSS.
+     render_visual.py mengisi {{...}} dan memilih kombinasi yang paling lama tidak dipakai. */
+  :root {
+    --aksen: {{AKSEN}}; --muda: {{AKSEN_MUDA}}; --dasar: {{DASAR}}; --tinta: {{TINTA}};
+    --f-judul: {{FONT_JUDUL}}; --w-judul: {{BOBOT_JUDUL}}; --f-teks: {{FONT_TEKS}};
+    --judul: #121317; --teks: #33353d; --sorot: var(--aksen); --kaki: #5b5e68;
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 1080px; height: 1350px; }
   body {
-    background: var(--dasar);
-    font-family: 'Plus Jakarta Sans', 'Inter', 'Segoe UI', system-ui, sans-serif;
-    color: #15161a;
-    position: relative; overflow: hidden;
+    background: var(--dasar); font-family: var(--f-teks), 'Segoe UI', system-ui, sans-serif;
+    color: var(--teks); position: relative; overflow: hidden;
   }
-  .bulat { position: absolute; border-radius: 50%; background: var(--aksen-muda); }
-  .b1 { width: 760px; height: 760px; right: -260px; top: -240px; }
-  .b2 { width: 380px; height: 380px; left: -140px; bottom: -120px; opacity: .7; }
-  .kartu {
-    position: absolute; inset: 90px 80px 120px 80px;
-    display: flex; flex-direction: column; justify-content: center;
-  }
-  .label {
-    display: inline-flex; align-self: flex-start; align-items: center; gap: 14px;
-    font-size: 28px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
-    color: var(--aksen); background: #fff; padding: 16px 26px; border-radius: 999px;
-    box-shadow: 0 6px 0 rgba(0,0,0,.06); margin-bottom: 56px;
-  }
-  .label i { width: 14px; height: 14px; border-radius: 50%; background: var(--aksen); display: inline-block; }
+  .hias i { position: absolute; display: none; }
+  main { position: absolute; inset: 90px 80px 150px; display: flex; flex-direction: column; justify-content: center; }
+  .kepala { display: flex; flex-direction: column; }
+  .label { font-size: 28px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--aksen); margin-bottom: 48px; }
+  .angka { font-family: var(--f-judul); font-weight: var(--w-judul); font-size: 230px; line-height: .9; color: var(--sorot); margin-bottom: 28px; letter-spacing: -.03em; }
   h1 {
-    font-family: 'Fraunces', Georgia, serif; font-weight: 600;
-    font-size: {{UKURAN_JUDUL}}px; line-height: 1.08; letter-spacing: -.01em;
-    color: #121317; margin-bottom: 44px;
+    font-family: var(--f-judul), Georgia, serif; font-weight: var(--w-judul);
+    font-size: {{UKURAN_JUDUL}}px; line-height: 1.08; letter-spacing: -.01em; color: var(--judul); margin-bottom: 44px;
   }
-  h1 em { font-style: normal; color: var(--aksen); }
-  p.isi { font-size: 40px; line-height: 1.4; font-weight: 500; color: #33353d; max-width: 880px; }
+  h1 em { font-style: normal; color: var(--sorot); }
+  p.isi { font-size: 40px; line-height: 1.4; font-weight: 500; max-width: 900px; }
   ol { list-style: none; counter-reset: n; margin-top: 8px; }
-  ol li {
-    counter-increment: n; position: relative; padding-left: 92px; margin-bottom: 30px;
-    font-size: 38px; line-height: 1.35; font-weight: 600; color: #26282f;
-  }
+  ol li { counter-increment: n; position: relative; padding-left: 92px; margin-bottom: 30px; font-size: 38px; line-height: 1.35; font-weight: 600; }
   ol li::before {
-    content: counter(n); position: absolute; left: 0; top: -4px;
-    width: 64px; height: 64px; border-radius: 18px; background: var(--aksen); color: #fff;
-    font-size: 34px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+    content: counter(n); position: absolute; left: 0; top: -4px; width: 64px; height: 64px; border-radius: 18px;
+    background: var(--aksen); color: #fff; font-size: 34px; font-weight: 800; display: flex; align-items: center; justify-content: center;
   }
-  /* gaya kutipan */
-  body.kutipan h1 { font-style: italic; }
-  body.kutipan h1::before {
-    content: "\201C"; display: block; font-size: 220px; line-height: .7;
-    color: var(--aksen); margin-bottom: -40px; font-style: normal;
-  }
-  body.kutipan p.isi { font-weight: 700; color: var(--aksen); font-size: 34px; letter-spacing: .02em; }
-  body.kutipan p.isi::before { content: "— "; }
   .kaki {
-    position: absolute; left: 80px; right: 80px; bottom: 64px;
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 26px; font-weight: 700; color: #5b5e68;
+    position: absolute; left: 80px; right: 80px; bottom: 64px; display: flex; justify-content: space-between; align-items: center;
+    font-size: 26px; font-weight: 700; color: var(--kaki);
   }
-  .kaki .garis { flex: 1; height: 3px; background: var(--aksen); opacity: .35; margin: 0 28px; border-radius: 2px; }
+  .kaki .garis { flex: 1; height: 3px; background: currentColor; opacity: .3; margin: 0 28px; }
+  /* gaya kutipan (berlaku di semua tata letak) */
+  body.kutipan h1 { font-style: italic; }
+  body.kutipan h1::before { content: "\201C"; display: block; font-size: 220px; line-height: .7; color: var(--sorot); margin-bottom: -30px; font-style: normal; }
+  body.kutipan p.isi { font-weight: 700; color: var(--sorot); font-size: 34px; letter-spacing: .02em; }
+  body.kutipan p.isi::before { content: "— "; }
+
+  /* 1. kartu: bulatan lembut + label pil */
+  .tata-kartu .hias i { display: block; border-radius: 50%; background: var(--muda); }
+  .tata-kartu .hias i:nth-child(1) { width: 760px; height: 760px; right: -260px; top: -240px; }
+  .tata-kartu .hias i:nth-child(2) { width: 380px; height: 380px; left: -140px; bottom: -120px; opacity: .7; }
+  .tata-kartu .label { align-self: flex-start; background: #fff; padding: 16px 26px; border-radius: 999px; box-shadow: 0 6px 0 rgba(0,0,0,.06); }
+
+  /* 2. poster: latar aksen penuh, judul raksasa di bawah */
+  .tata-poster { --judul: #fff; --teks: rgba(255,255,255,.88); --sorot: var(--muda); --kaki: rgba(255,255,255,.75); background: var(--aksen); }
+  .tata-poster main { justify-content: flex-end; }
+  .tata-poster .hias i:nth-child(1) { display: block; width: 900px; height: 900px; border-radius: 50%; border: 70px solid rgba(255,255,255,.1); right: -380px; top: -340px; }
+  .tata-poster .hias i:nth-child(2) { display: block; width: 240px; height: 240px; left: 80px; top: 90px;
+    background: radial-gradient(rgba(255,255,255,.35) 3px, transparent 4px) 0 0 / 30px 30px; }
+  .tata-poster .label { color: #fff; display: flex; align-items: center; gap: 20px; }
+  .tata-poster .label::before { content: ""; width: 70px; height: 4px; background: var(--muda); }
+  .tata-poster h1 { line-height: 1.0; letter-spacing: -.025em; }
+  .tata-poster h1 em { text-decoration: underline; text-decoration-thickness: 8px; text-underline-offset: 12px; }
+  .tata-poster ol li::before { background: none; color: var(--muda); border: 3px solid var(--muda); border-radius: 50%; }
+
+  /* 3. split: blok warna di atas, isi di bawah */
+  .tata-split main { inset: 0 0 150px; justify-content: flex-start; }
+  .tata-split .kepala { background: var(--tinta); padding: 110px 80px 70px; --judul: #fff; --sorot: var(--muda); }
+  .tata-split .kepala h1 { margin-bottom: 0; }
+  .tata-split .bagian { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 40px 80px 0; }
+  .tata-split ol li { font-size: 42px; margin-bottom: 40px; }
+  .tata-split .label { color: var(--muda); }
+  .tata-split .hias i:nth-child(1) { display: block; z-index: 2; width: 150px; height: 150px; right: 80px; top: 70px;
+    border-radius: 50%; background: var(--aksen); }
+  .tata-split ol li::before { border-radius: 50%; }
+  .tata-split.kutipan .bagian { padding-top: 48px; }
+
+  /* 4. catatan: kertas bergaris, selotip, stabilo */
+  .tata-catatan { background: #fffdf6 repeating-linear-gradient(transparent 0 63px, color-mix(in srgb, var(--aksen) 22%, transparent) 63px 65px); }
+  .tata-catatan .hias i:nth-child(1) { display: block; left: 140px; top: 0; bottom: 0; width: 3px; background: #e2786b; opacity: .6; }
+  .tata-catatan .hias i:nth-child(2) { display: block; width: 260px; height: 70px; right: 120px; top: 52px; transform: rotate(4deg);
+    background: color-mix(in srgb, var(--muda) 80%, transparent); box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+  .tata-catatan main { left: 190px; right: 80px; }
+  .tata-catatan .label { font-family: 'Caveat', cursive; font-size: 56px; letter-spacing: 0; text-transform: none; transform: rotate(-2deg); align-self: flex-start; }
+  .tata-catatan h1 em { color: var(--judul); background: linear-gradient(transparent 58%, var(--muda) 58% 92%, transparent 92%); padding: 0 6px; }
+  .tata-catatan ol li::before { background: none; color: var(--aksen); font-family: 'Caveat', cursive; font-size: 60px; border: 3px solid var(--aksen); border-radius: 50% 45% 55% 50%; }
+  .tata-catatan .kaki { left: 190px; font-family: 'Caveat', cursive; font-size: 40px; font-weight: 600; }
+  .tata-catatan .kaki .garis { display: none; }
+
+  /* 5. gelap: latar gelap, kisi tipis, cahaya aksen */
+  .tata-gelap { --judul: #f4f5f8; --teks: #c9ccd6; --sorot: var(--muda); --kaki: #8b8f9c;
+    background:
+      radial-gradient(circle at 85% 12%, color-mix(in srgb, var(--aksen) 55%, transparent), transparent 45%),
+      linear-gradient(rgba(255,255,255,.045) 2px, transparent 2px) 0 0 / 72px 72px,
+      linear-gradient(90deg, rgba(255,255,255,.045) 2px, transparent 2px) 0 0 / 72px 72px,
+      var(--tinta); }
+  .tata-gelap .label { font-family: 'JetBrains Mono', monospace; color: var(--muda); letter-spacing: .04em; text-transform: none; font-weight: 500; }
+  .tata-gelap .label::before { content: "// "; opacity: .6; }
+  .tata-gelap h1 em { color: color-mix(in srgb, var(--aksen) 45%, #fff); border-bottom: 6px solid var(--aksen); }
+  .tata-gelap ol li::before { content: "0" counter(n); background: none; color: var(--muda); font-family: 'JetBrains Mono', monospace; font-weight: 500; width: auto; justify-content: flex-start; }
+  .tata-gelap .kaki { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+
+  /* 6. bingkai: bingkai ganda, rata tengah, bernuansa undangan/editorial klasik */
+  .tata-bingkai { --sorot: var(--aksen); }
+  .tata-bingkai .hias i:nth-child(1) { display: block; inset: 40px; border: 6px solid var(--tinta); }
+  .tata-bingkai .hias i:nth-child(2) { display: block; inset: 58px; border: 2px solid var(--tinta); opacity: .5; }
+  .tata-bingkai main { inset: 130px 120px 190px; align-items: center; text-align: center; }
+  .tata-bingkai .kepala { align-items: center; }
+  .tata-bingkai .label { display: flex; align-items: center; gap: 22px; color: var(--tinta); }
+  .tata-bingkai .label::before, .tata-bingkai .label::after { content: ""; width: 60px; height: 2px; background: var(--aksen); }
+  .tata-bingkai h1 em { font-style: italic; }
+  .tata-bingkai p.isi { max-width: 760px; }
+  .tata-bingkai ol { text-align: left; }
+  .tata-bingkai ol li { font-size: 40px; }
+  .tata-bingkai ol li::before { background: var(--tinta); border-radius: 50%; }
+  .tata-bingkai .kaki { left: 120px; right: 120px; bottom: 96px; color: var(--tinta); }
+
+  /* 7. majalah: kop tebal, label vertikal, judul berat */
+  .tata-majalah { background: #faf8f3; }
+  .tata-majalah .hias i:nth-child(1) { display: block; left: 80px; right: 80px; top: 150px; height: 16px; background: var(--tinta); }
+  .tata-majalah .hias i:nth-child(2) { display: block; right: 0; top: 0; bottom: 0; width: 64px; background: var(--aksen); }
+  .tata-majalah main { inset: 210px 150px 150px 80px; }
+  .tata-majalah .label { position: absolute; top: -138px; left: 0; color: var(--tinta); font-size: 30px; letter-spacing: .2em; }
+  .tata-majalah h1 { line-height: 1.02; letter-spacing: -.02em; padding-bottom: 36px; border-bottom: 3px solid var(--tinta); }
+  .tata-majalah h1 em { color: var(--aksen); font-style: italic; }
+  .tata-majalah ol li { font-size: 42px; padding-left: 110px; border-bottom: 1px solid rgba(0,0,0,.15); padding-bottom: 24px; }
+  .tata-majalah ol li::before { content: counter(n, decimal-leading-zero); background: none; color: var(--aksen); font-family: var(--f-judul); font-size: 56px; width: auto; top: -10px; }
+  .tata-majalah .kaki { right: 150px; text-transform: uppercase; letter-spacing: .12em; font-size: 22px; }
 </style>
 </head>
-<body class="{{GAYA}}">
-  <div class="bulat b1"></div><div class="bulat b2"></div>
-  <div class="kartu">
-    <div class="label"><i></i>{{LABEL}}</div>
-    <h1>{{JUDUL}}</h1>
-    {{KONTEN}}
-  </div>
+<body class="tata-{{TATA}} {{GAYA}}">
+  <div class="hias"><i></i><i></i></div>
+  <main>
+    <div class="kepala">
+      <div class="label">{{LABEL}}</div>
+      {{ANGKA}}
+      <h1>{{JUDUL}}</h1>
+    </div>
+    <div class="bagian">{{KONTEN}}</div>
+  </main>
   <div class="kaki"><span>{{AKUN}}</span><span class="garis"></span><span>{{TANGGAL}}</span></div>
 </body>
 </html>

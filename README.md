@@ -23,10 +23,11 @@ skills/konten-threads/
   referensi/gaya-bahasa.md  suara akun & pola hook/utas
   referensi/contoh-postingan.md  postingan asli Anda sebagai acuan gaya
   scripts/contoh.py         tambah/daftar/hapus contoh gaya
-  templates/visual.html     template visual 1080×1350
+  templates/visual.html     template visual 1080×1350, 7 tata letak
   scripts/render_visual.py  template standar → PNG
   scripts/render_html.py    desain bebas buatan Claude (HTML/SVG) → PNG
   referensi/desain-bebas.md aturan & arah desain bebas
+  scripts/ragam.py          ingatan gaya visual agar gambar tidak seragam
   scripts/antrian.py        antrian usulan & persetujuan per slot
   scripts/post_threads.py   posting ke Threads API (utas berantai + gambar)
 pasang.sh                   memasang skill + mengisi nomor pemilik dari ~/.openclaw/.env
@@ -196,5 +197,9 @@ Tanpa sebutan akun, konten untuk `utama`. Setiap usulan menyebut handle tujuanny
 - **Token Threads** berlaku 60 hari, per akun. Perpanjang tiap bulan dengan `jalankan post_threads --refresh-token`
   (akun lain: `--refresh-token --akun bisnis`), atau tambahkan cron bulanan untuk itu.
 - Riwayat & antrian: `~/.openclaw/workspace/konten-threads/antrian/` (satu file JSON per hari).
-- Ubah gaya tulisan di `referensi/gaya-bahasa.md`, sumber di `referensi/sumber-tren.md`, warna/desain di `templates/visual.html`.
+- Ubah gaya tulisan di `referensi/gaya-bahasa.md`, sumber di `referensi/sumber-tren.md`, warna/desain di `templates/visual.html`
+  (tata letak) dan `scripts/render_visual.py` (palet & font), arah seni desain bebas di `referensi/desain-bebas.md`.
+- Visual otomatis bervariasi: `render_visual` memilih tata letak (kartu, poster, split, catatan, gelap, bingkai, majalah),
+  pasangan font, dan varian palet yang paling lama tidak dipakai; desain bebas memakai arah seni yang berbeda tiap kali.
+  Lihat riwayatnya: `jalankan ragam`; saran arah berikutnya: `jalankan ragam --saran`.
 - Konten **tidak pernah** diposting tanpa balasan "OK" dari Anda.

@@ -1,7 +1,7 @@
 ---
 name: konten-threads
 description: Riset topik tren Indonesia & Purwokerto, susun usulan konten Threads berbahasa Indonesia lengkap dengan visual, kirim ke WhatsApp untuk disetujui, lalu posting ke Threads. Dipakai oleh cron pagi/siang/malam, oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
-version: 1.5.0
+version: 1.6.0
 metadata:
   openclaw:
     requires:
@@ -64,7 +64,14 @@ Pemilik bisa punya **beberapa akun Threads**. Daftarnya (nama + handle, tanpa to
    - Slot `pagi`: tiap opsi berupa array `posts` berisi 4–7 postingan. Postingan 1 = hook kuat; terakhir = penutup + ajakan diskusi.
    - Slot `siang`/`malam`: `posts` berisi 1 postingan.
    - Isi `tag` (satu tag topik, tanpa #, mis. `Parenting`), dan `visual` (lihat langkah 4).
-4. **Buat visual** untuk tiap opsi:
+4. **Buat visual** untuk tiap opsi. **Visual tidak boleh seragam:** opsi dalam satu slot memakai tampilan yang
+   berbeda, dan gambar hari ini tidak mirip gambar kemarin. Cek dulu `{SKILL_DIR}/scripts/jalankan ragam`
+   (gaya yang dipakai belakangan).
+   **Desain bebas (pilihan utama — minimal 1 opsi tiap slot, dan semua opsi utas pagi):**
+   ikuti `referensi/desain-bebas.md`: ambil arah seni lewat `jalankan ragam --saran`, tulis HTML/SVG khusus, lalu render:
+   `{SKILL_DIR}/scripts/jalankan render_html --html <file.html> --out <file.png> --arah "<arah>"`
+   **Template cepat** untuk opsi lainnya — tata letak (7 macam), pasangan font, dan varian palet dipilih otomatis
+   dari yang paling lama tidak dipakai:
    ```bash
    {SKILL_DIR}/scripts/jalankan render_visual \
      --kategori teknologi|buku|parenting|lokal|umum \
@@ -73,10 +80,8 @@ Pemilik bisa punya **beberapa akun Threads**. Daftarnya (nama + handle, tanpa to
      --label "Label kecil, mis. PURWOKERTO · TREN HARI INI" \
      --out ~/.openclaw/workspace/konten-threads/gambar/<tanggal>-<slot>-<n>.png
    ```
-   Untuk utas daftar/tips boleh pakai `--poin "poin 1|poin 2|poin 3"` (maks 4 poin).
-   **Desain bebas (disarankan untuk utas pagi dan minimal 1 opsi tiap slot, agar feed tidak monoton):**
-   tulis desain HTML/SVG khusus sesuai `referensi/desain-bebas.md`, lalu render:
-   `{SKILL_DIR}/scripts/jalankan render_html --html <file.html> --out <file.png>`
+   Untuk utas daftar/tips boleh pakai `--poin "poin 1|poin 2|poin 3"` (maks 4 poin); untuk statistik bersumber
+   `--angka "73%"`. Jangan memaksa `--tata-letak`/`--font`/`--palet` kecuali pemilik meminta tampilan tertentu.
 5. **Simpan ke antrian** (JSON via stdin):
    ```bash
    {SKILL_DIR}/scripts/jalankan antrian simpan --slot <slot> <<'JSON'
@@ -207,8 +212,11 @@ Konfirmasi singkat sebelum bekerja, mis.: "Oke: Buku · pendek · kutipan · pos
        (kutipan tokoh nyata harus akurat dan bersumber; jika ragu, tulis kalimat sendiri dan isi `--isi` dengan nama akun)
      - foto sendiri → `"gambar": "<path foto>"`
      - tanpa gambar → `"gambar": null`
-     - desain bebas → ikuti `referensi/desain-bebas.md`: tulis HTML/SVG khusus per opsi (tata letak kedua opsi
-       harus berbeda), render dengan `render_html`, periksa hasilnya, perbaiki bila teks terpotong
+     - desain bebas → ikuti `referensi/desain-bebas.md`: tulis HTML/SVG khusus per opsi (arah seni kedua opsi
+       harus berbeda, lihat `jalankan ragam --saran`), render dengan `render_html --arah`, periksa hasilnya,
+       perbaiki bila teks terpotong
+     - kartu judul / daftar poin / kutipan memakai template; tata letaknya otomatis berganti, jadi kedua opsi
+       tetap berbeda tampilan
    - Simpan: `{SKILL_DIR}/scripts/jalankan antrian simpan --slot manualN --akun <nama> --jadwal "<langsung | HH.MM WIB>"` (JSON via stdin).
    - Judul pesan usulan: `🧵 Usulan manual (manualN) untuk @handle — Opsi N/2`.
    - Pesan penutup: `Balas: OK 1 / OK 2, "revisi 1: ...", "ganti topik", atau "batal".`
