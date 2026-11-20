@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root { --aksen: {{AKSEN}}; --aksen-muda: {{AKSEN_MUDA}}; --dasar: {{DASAR}}; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1350px; }
+  body {
+    background: var(--dasar);
+    font-family: 'Plus Jakarta Sans', 'Inter', 'Segoe UI', system-ui, sans-serif;
+    color: #15161a;
+    position: relative; overflow: hidden;
+  }
+  .bulat { position: absolute; border-radius: 50%; background: var(--aksen-muda); }
+  .b1 { width: 760px; height: 760px; right: -260px; top: -240px; }
+  .b2 { width: 380px; height: 380px; left: -140px; bottom: -120px; opacity: .7; }
+  .kartu {
+    position: absolute; inset: 90px 80px 120px 80px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .label {
+    display: inline-flex; align-self: flex-start; align-items: center; gap: 14px;
+    font-size: 28px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--aksen); background: #fff; padding: 16px 26px; border-radius: 999px;
+    box-shadow: 0 6px 0 rgba(0,0,0,.06); margin-bottom: 56px;
+  }
+  .label i { width: 14px; height: 14px; border-radius: 50%; background: var(--aksen); display: inline-block; }
+  h1 {
+    font-family: 'Fraunces', Georgia, serif; font-weight: 600;
+    font-size: {{UKURAN_JUDUL}}px; line-height: 1.08; letter-spacing: -.01em;
+    color: #121317; margin-bottom: 44px;
+  }
+  h1 em { font-style: normal; color: var(--aksen); }
+  p.isi { font-size: 40px; line-height: 1.4; font-weight: 500; color: #33353d; max-width: 880px; }
+  ol { list-style: none; counter-reset: n; margin-top: 8px; }
+  ol li {
+    counter-increment: n; position: relative; padding-left: 92px; margin-bottom: 30px;
+    font-size: 38px; line-height: 1.35; font-weight: 600; color: #26282f;
+  }
+  ol li::before {
+    content: counter(n); position: absolute; left: 0; top: -4px;
+    width: 64px; height: 64px; border-radius: 18px; background: var(--aksen); color: #fff;
+    font-size: 34px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  }
+  /* gaya kutipan */
+  body.kutipan h1 { font-style: italic; }
+  body.kutipan h1::before {
+    content: "\201C"; display: block; font-size: 220px; line-height: .7;
+    color: var(--aksen); margin-bottom: -40px; font-style: normal;
+  }
+  body.kutipan p.isi { font-weight: 700; color: var(--aksen); font-size: 34px; letter-spacing: .02em; }
+  body.kutipan p.isi::before { content: "— "; }
+  .kaki {
+    position: absolute; left: 80px; right: 80px; bottom: 64px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 26px; font-weight: 700; color: #5b5e68;
+  }
+  .kaki .garis { flex: 1; height: 3px; background: var(--aksen); opacity: .35; margin: 0 28px; border-radius: 2px; }
+</style>
+</head>
+<body class="{{GAYA}}">
+  <div class="bulat b1"></div><div class="bulat b2"></div>
+  <div class="kartu">
+    <div class="label"><i></i>{{LABEL}}</div>
+    <h1>{{JUDUL}}</h1>
+    {{KONTEN}}
+  </div>
+  <div class="kaki"><span>{{AKUN}}</span><span class="garis"></span><span>{{TANGGAL}}</span></div>
+</body>
+</html>

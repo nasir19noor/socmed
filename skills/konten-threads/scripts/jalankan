@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Menjalankan skrip skill konten-threads memakai Python dari virtual environment.
+#   jalankan <nama_skrip> [argumen...]     contoh: jalankan antrian status
+# Lokasi venv bisa diganti lewat env KONTEN_VENV.
+set -euo pipefail
+VENV="${KONTEN_VENV:-/home/openclaw/projects/threads/venv}"
+PY=""
+for c in "$VENV/bin/python" "$VENV/.venv/bin/python" "$VENV/venv/bin/python" "$VENV/env/bin/python"; do
+  if [ -x "$c" ]; then PY="$c"; break; fi
+done
+if [ -z "$PY" ]; then
+  echo "[peringatan] venv tidak ditemukan di $VENV, memakai python3 sistem" >&2
+  PY="$(command -v python3)"
+fi
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKRIP="${1:?pakai: jalankan <render_visual|antrian|post_threads> [argumen]}"; shift
+exec "$PY" "$DIR/${SKRIP%.py}.py" "$@"

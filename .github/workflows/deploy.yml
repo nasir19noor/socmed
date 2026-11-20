@@ -1,0 +1,63 @@
+name: 'Deploy konten-threads'
+
+# Installs the skill on the OpenClaw host and restarts the gateway so the
+# agent picks it up. Runs ON that host: a self-hosted runner registered as
+# the `openclaw` user with the label `openclaw` (see README, "Deploy
+# otomatis"), because everything lives under that user's ~/.openclaw.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'skills/**'
+      - 'pasang.sh'
+      - 'AGENTS-tambahan.md'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+# One deploy at a time: two overlapping copies would race on the skill folder.
+concurrency:
+  group: deploy-openclaw
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Copy the skill, restart OpenClaw
+    runs-on: [self-hosted, contabo-2-openclaw]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Before anything on the host changes: a script that does not even
+      # parse would break every cron run until the next deploy.
+      - name: Check the scripts
+        run: |
+          python3 -m py_compile skills/konten-threads/scripts/*.py
+          for f in skills/konten-threads/scripts/jalankan pasang.sh cron-setup.sh; do bash -n "$f"; done
+
+      # cp -r skills/konten-threads ~/.openclaw/workspace/skills/ — done by
+      # pasang.sh, which also fills in the owner's number (THREADS_PEMILIK
+      # in ~/.openclaw/.env; the repo only says {{PEMILIK}}), keeps the
+      # style examples the owner saved from WhatsApp, and keeps the
+      # "threads" rule in AGENTS.md current. A bare cp would do neither.
+      - name: Copy the skill to OpenClaw
+        run: bash pasang.sh
+
+      - name: Make the scripts executable
+        run: chmod +x ~/.openclaw/workspace/skills/konten-threads/scripts/*
+
+      # The runner service may not have the login PATH where openclaw lives
+      # (npm global, ~/.local/bin); say so plainly rather than "not found".
+      - name: Restart the OpenClaw gateway
+        run: |
+          export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:/usr/local/bin:$PATH"
+          if ! command -v openclaw >/dev/null; then
+            echo "::error::openclaw tidak ada di PATH runner. Tambahkan foldernya ke file .path runner, lalu restart runner."
+            exit 1
+          fi
+          openclaw gateway restart
+          echo "### Terpasang" >> "$GITHUB_STEP_SUMMARY"
+          echo "konten-threads @ \`${GITHUB_SHA::7}\`, gateway di-restart." >> "$GITHUB_STEP_SUMMARY"

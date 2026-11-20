@@ -1,2 +1,167 @@
-# socmed
-Social Media management and automation
+# Konten Threads Otomatis — OpenClaw + Claude
+
+Alur:
+
+```
+06.30 / 12.15 / 19.15 WIB  cron "usulan"  → riset tren (nasional, Purwokerto, teknologi, buku, parenting)
+                                           → 3 opsi konten + visual PNG → WA pemilik
+Anda balas "OK 2" / "revisi 1: ..." / "skip" (dari nomor pemilik)
+08.00 / 13.00 / 20.00 WIB  cron "posting" → posting opsi yang disetujui ke Threads → tautan dikirim ke WA
+Kapan saja: kirim "threads" dari nomor pemilik → bot bertanya topik, format, gambar, waktu → usulan → OK → posting
+          atau chat bebas: "buatkan konten tema X" / "analisa tren buku minggu ini"
+```
+
+**Bot** = nomor WhatsApp OpenClaw. **Pemilik** = satu-satunya nomor yang boleh menyetujui dan memicu konten.
+Nomor pemilik tidak ditulis di repo: isi `THREADS_PEMILIK` di `~/.openclaw/.env`, lalu `pasang.sh` memasukkannya ke skill.
+
+## Isi paket
+
+```
+skills/konten-threads/
+  SKILL.md                  instruksi agen (riset, gaya, alur persetujuan)
+  referensi/sumber-tren.md  daftar sumber riset
+  referensi/gaya-bahasa.md  suara akun & pola hook/utas
+  referensi/contoh-postingan.md  postingan asli Anda sebagai acuan gaya
+  scripts/contoh.py         tambah/daftar/hapus contoh gaya
+  templates/visual.html     template visual 1080×1350
+  scripts/render_visual.py  template standar → PNG
+  scripts/render_html.py    desain bebas buatan Claude (HTML/SVG) → PNG
+  referensi/desain-bebas.md aturan & arah desain bebas
+  scripts/antrian.py        antrian usulan & persetujuan per slot
+  scripts/post_threads.py   posting ke Threads API (utas berantai + gambar)
+pasang.sh                   memasang skill + mengisi nomor pemilik dari ~/.openclaw/.env
+cron-setup.sh               mendaftarkan 6 cron job
+.github/workflows/deploy.yml  deploy otomatis ke server OpenClaw (self-hosted runner)
+AGENTS-tambahan.md          aturan pemicu kata "threads" (tempel ke AGENTS.md)
+env.example                 variabel yang perlu diisi
+```
+
+## Langkah pemasangan
+
+### 1. Isi nomor pemilik, lalu pasang skill
+Tambahkan ke `~/.openclaw/.env` (lihat `env.example`):
+```bash
+THREADS_PEMILIK=+62812xxxxxxx
+```
+Lalu dari folder repo ini:
+```bash
+bash pasang.sh
+openclaw skills list | grep konten-threads
+```
+`pasang.sh` menyalin skill ke `~/.openclaw/workspace/skills/konten-threads`, mengisi nomor pemilik ke
+`SKILL.md`, dan menambahkan aturan pemicu "threads" ke `AGENTS.md` (sekali saja). Contoh gaya yang sudah
+tersimpan di server (`contoh-postingan.md`) **tidak ditimpa**. Jalankan ulang setiap kali repo diperbarui.
+
+### 2. Pasang perender gambar di virtual environment
+Semua skrip dijalankan lewat `scripts/jalankan`, yang otomatis memakai Python dari venv
+`/home/openclaw/projects/threads/venv` (yaitu `/home/openclaw/projects/threads/venv/bin/python`).
+Jika venv Anda pindah, set `KONTEN_VENV=/lokasi/baru` di `~/.openclaw/.env`.
+
+```bash
+source /home/openclaw/projects/threads/venv/bin/activate
+pip install playwright
+python -m playwright install chromium
+sudo $(which python) -m playwright install-deps chromium  # sekali saja, pustaka sistem untuk Chromium di Linux
+deactivate
+```
+(Jika sudah ada Google Chrome/Chromium di server, skrip otomatis memakainya sebagai cadangan.)
+Skrip lain hanya memakai pustaka bawaan Python, jadi tidak perlu paket tambahan.
+
+Uji:
+```bash
+~/.openclaw/workspace/skills/konten-threads/scripts/jalankan render_visual \
+  --kategori lokal --judul "Mendoan *naik kelas*" --isi "Uji visual" --out ~/uji.png
+```
+
+### 3. Siapkan akses Threads API
+1. Buka developers.facebook.com → **Create App** → pilih use case **Access the Threads API**.
+2. Tambahkan izin `threads_basic` dan `threads_content_publish`.
+3. Di **App roles → Roles**, tambahkan akun Threads Anda sebagai *Threads Tester*, lalu terima undangannya di aplikasi Threads (Settings → Account → Website permissions).
+4. Pakai **User Token Generator** di dashboard aplikasi untuk membuat token, lalu tukar ke **long-lived token** (berlaku 60 hari dan bisa diperpanjang).
+5. Isi `~/.openclaw/.env` sesuai `env.example`, lalu cek:
+   ```bash
+   ~/.openclaw/workspace/skills/konten-threads/scripts/jalankan post_threads --cek
+   ```
+   Perintah ini juga menampilkan `THREADS_USER_ID` yang benar.
+6. Daftar gratis di api.imgbb.com untuk `IMGBB_API_KEY` (tempat gambar di-hosting agar bisa diambil Threads).
+
+### 4. Pastikan agen boleh menjalankan perintah
+Skill ini menjalankan `scripts/jalankan` (Python dari venv) dan `openclaw message send`. Pastikan tool **exec** aktif untuk agen utama (lihat `openclaw approvals` / pengaturan tools). Model utama sebaiknya Claude, mis.:
+```bash
+openclaw config set agents.defaults.model.primary "anthropic/claude-sonnet-4-6"
+```
+(gunakan model Claude terbaru yang tersedia di akun Anda).
+
+### 5. WhatsApp — sudah sesuai
+Pastikan `allowFrom` OpenClaw memuat nomor pemilik (`THREADS_PEMILIK`). Skill hanya menerima perintah konten dari nomor itu; nomor lain di allowlist tetap bisa chat biasa.
+
+### 5b. Trigger manual "threads"
+Sudah dipasang oleh `pasang.sh` (langkah 1): isi `AGENTS-tambahan.md`, dengan nomor pemilik terisi, ditambahkan ke
+akhir `~/.openclaw/workspace/AGENTS.md` sehingga agen selalu memakai skill ini setiap kali menerima kata "threads".
+
+### 6. Daftarkan cron
+```bash
+bash cron-setup.sh
+openclaw gateway restart
+```
+
+### 7. Uji coba
+```bash
+openclaw cron list
+openclaw cron run <id "Threads usulan siang">   # usulan harus masuk ke WA pemilik
+```
+Balas "OK 1" dari nomor pemilik, lalu uji posting tanpa benar-benar memposting:
+```bash
+~/.openclaw/workspace/skills/konten-threads/scripts/jalankan post_threads --slot siang --dry-run
+```
+
+## Perintah via WhatsApp (dari nomor pemilik)
+
+### Trigger manual
+Kirim **`threads`** ke nomor bot. Bot akan bertanya dalam satu pesan:
+1. Topik: tren hari ini, teknologi, buku, parenting, lokal Purwokerto, atau tema sendiri
+2. Format: pendek atau panjang (utas)
+3. Gambar: kartu judul, daftar poin, kutipan besar, foto sendiri, tanpa gambar, atau **desain bebas** (Claude mendesain HTML/SVG khusus)
+4. Waktu posting: langsung setelah OK, atau jam tertentu
+
+Cukup jawab singkat, misalnya `1c 2a 3c 4a`. Bisa juga langsung lengkap dalam satu pesan, misalnya
+`threads parenting panjang daftar poin jam 15.30`. Kirim `threads cepat` untuk memakai pilihan default.
+Bot lalu mengirim 2 opsi. Balas `OK 1` untuk menyetujui, dan konten akan diposting langsung atau sesuai jam yang dipilih.
+
+### Perintah lain
+
+| Ketik | Hasil |
+|---|---|
+| `OK 2` | setujui opsi 2 untuk slot terdekat |
+| `OK pagi 1` | setujui opsi 1 slot pagi |
+| `revisi 3: lebih santai, tambah sudut Purwokerto` | opsi 3 ditulis ulang |
+| `ganti topik` | 3 usulan baru |
+| `skip` | slot dilewati |
+| `status` | ringkasan hari ini |
+| `contoh: <teks postingan Anda>` | disimpan sebagai acuan gaya bahasa |
+| `daftar contoh` / `hapus contoh 3` | kelola contoh gaya |
+| `buatkan konten tema parenting gen alpha untuk malam` | usulan bertema |
+| `analisa tren teknologi minggu ini` | ringkasan + ide konten |
+
+## Deploy otomatis (GitHub Actions)
+
+Setiap push ke `main` yang mengubah `skills/`, `pasang.sh` atau `AGENTS-tambahan.md` menjalankan
+`.github/workflows/deploy.yml` di server OpenClaw: memeriksa skrip, memasang skill (`pasang.sh`, yaitu
+salin `skills/konten-threads` ke `~/.openclaw/workspace/skills/`), `chmod +x` skrip, lalu
+`openclaw gateway restart`. Bisa juga dijalankan manual dari tab **Actions → Deploy konten-threads → Run workflow**.
+
+Workflow ini berjalan **di server itu sendiri**, lewat self-hosted runner. Pasang sekali, sebagai user `openclaw`:
+1. GitHub → repo ini → **Settings → Actions → Runners → New self-hosted runner** (Linux), ikuti perintahnya
+   di folder mis. `~/actions-runner`. Saat `config.sh` menanyakan label, tambahkan **`openclaw`**.
+2. Jalankan sebagai layanan: `sudo ./svc.sh install openclaw && sudo ./svc.sh start`.
+3. Pastikan `openclaw` ada di PATH runner: jika `command -v openclaw` menunjuk ke folder di luar PATH
+   standar, tambahkan folder itu ke `~/actions-runner/.path`, lalu `sudo ./svc.sh stop && sudo ./svc.sh start`.
+
+`THREADS_PEMILIK` tetap harus ada di `~/.openclaw/.env` — workflow berhenti dengan pesan jelas jika belum.
+Cron tidak perlu didaftarkan ulang saat deploy.
+
+## Perawatan
+- **Token Threads** berlaku 60 hari. Perpanjang tiap bulan dengan `post_threads.py --refresh-token`, atau tambahkan cron bulanan untuk itu.
+- Riwayat & antrian: `~/.openclaw/workspace/konten-threads/antrian/` (satu file JSON per hari).
+- Ubah gaya tulisan di `referensi/gaya-bahasa.md`, sumber di `referensi/sumber-tren.md`, warna/desain di `templates/visual.html`.
+- Konten **tidak pernah** diposting tanpa balasan "OK" dari Anda.
