@@ -96,6 +96,17 @@ the 60-day long-lived token.
 resources** except Google Fonts, and warns when content overflows
 1080×1350. Both try Playwright first, then a system Chrome/Chromium.
 
+**Accounts**: several Threads accounts, one approver (the owner), one voice.
+`utama` uses `THREADS_USER_ID` / `THREADS_ACCESS_TOKEN` / `THREADS_HANDLE`;
+another account `x` uses the same names suffixed `_X`
+(`post_threads.nama_env`). The scheduled slots `pagi`/`siang`/`malam` are
+always `utama` (`antrian simpan` refuses another account there); other
+accounts post only through manual slots (`threads @bisnis …`). Each slot
+stores its `akun`, and `post_threads --slot` posts to that account, so a
+one-shot cron needs no account argument. `--daftar-akun` lists accounts
+from the env (names and handles only); `--cek` / `--refresh-token` take
+`--akun`. Proposals must name the target handle.
+
 ## Conventions and gotchas
 
 - **Nothing is ever posted without the owner's explicit "OK".** The posting

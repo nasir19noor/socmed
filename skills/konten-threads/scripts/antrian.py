@@ -2,7 +2,7 @@
 """Antrian usulan konten Threads per tanggal (WIB) dan slot (pagi/siang/malam).
 
 Perintah:
-  simpan   --slot S                 JSON {"opsi":[...]} dari stdin (menimpa usulan slot S hari ini)
+  simpan   --slot S [--akun A]      JSON {"opsi":[...]} dari stdin (menimpa usulan slot S hari ini)
   ganti    --slot S --opsi N        JSON satu opsi dari stdin (revisi opsi N)
   setujui  --slot S --opsi N        tandai opsi N disetujui
   skip     --slot S                 lewati slot hari ini
@@ -12,6 +12,8 @@ Perintah:
   slot-baru                         cetak nama slot manual berikutnya hari ini (manual1, manual2, ...)
 
 Slot: pagi, siang, malam (terjadwal) atau manualN (trigger manual dari WhatsApp).
+Akun: tiap slot mencatat akun Threads tujuannya (`--akun`, default `utama`); post_threads.py
+memakai akun itu. Slot terjadwal selalu `utama`; akun lain hanya lewat slot manual.
 
 Lokasi data: $KONTEN_DATA_DIR atau ~/.openclaw/workspace/konten-threads/antrian
 """
@@ -38,6 +40,21 @@ def slot_type(s: str) -> str:
     if s in SLOT or re.fullmatch(r"manual\d+", s):
         return s
     raise argparse.ArgumentTypeError(f"slot tidak dikenal: {s} (pagi/siang/malam/manualN)")
+
+
+AKUN_UTAMA = "utama"
+
+
+def akun_type(s: str) -> str:
+    """Nama akun: huruf kecil dan angka, diawali huruf (jadi akhiran nama variabel env)."""
+    s = s.strip().lstrip("@").lower()
+    if re.fullmatch(r"[a-z][a-z0-9]{0,19}", s):
+        return s
+    raise argparse.ArgumentTypeError(f"nama akun tidak sah: {s} (huruf kecil/angka, diawali huruf)")
+
+
+def akun_slot(s: dict) -> str:
+    return (s or {}).get("akun") or AKUN_UTAMA
 
 
 def jam_slot(slot: str, s: dict = None) -> str:
@@ -129,12 +146,14 @@ def cmd_simpan(a):
         err.append("tidak ada opsi")
     if err:
         sys.exit("GAGAL VALIDASI:\n- " + "\n- ".join(err))
+    if a.slot in SLOT and a.akun != AKUN_UTAMA:
+        sys.exit(f"Slot {a.slot} terjadwal selalu untuk akun utama; akun lain lewat slot manual (slot-baru).")
     d = muat(a.tanggal)
     d["slot"][a.slot] = {"status": "menunggu", "disetujui": None, "opsi": opsi,
-                         "jadwal": a.jadwal or None,
+                         "akun": a.akun, "jadwal": a.jadwal or None,
                          "dibuat": dt.datetime.now(WIB).isoformat(timespec="seconds")}
     tulis(d)
-    print(f"Tersimpan: {a.tanggal} slot {a.slot}, {len(opsi)} opsi.")
+    print(f"Tersimpan: {a.tanggal} slot {a.slot} (akun {a.akun}), {len(opsi)} opsi.")
 
 
 def ambil_slot(d, slot):
@@ -194,6 +213,8 @@ def cmd_status(a):
             print(f"- {sl} ({jam}): belum ada usulan")
             continue
         info = s["status"]
+        if akun_slot(s) != AKUN_UTAMA:
+            info = f"[{akun_slot(s)}] " + info
         if s.get("disetujui"):
             info += f" (opsi {s['disetujui']}: {s['opsi'][s['disetujui'] - 1].get('topik', '')})"
         if s.get("tautan"):
@@ -211,7 +232,7 @@ def cmd_riwayat(a):
         for sl, s in d["slot"].items():
             for k, o in enumerate(s.get("opsi", []), 1):
                 tanda = "✔ diposting" if s.get("status") == "terposting" and s.get("disetujui") == k else "usulan"
-                print(f"{t} {sl} [{tanda}] {o.get('kategori', '')}: {o.get('topik', '')}")
+                print(f"{t} {sl} ({akun_slot(s)}) [{tanda}] {o.get('kategori', '')}: {o.get('topik', '')}")
 
 
 def cmd_ambil(a):
@@ -251,6 +272,8 @@ def main():
             p.add_argument("--opsi", required=True, type=int)
         if nama in ("simpan", "setujui"):
             p.add_argument("--jadwal", default="", help="Teks jadwal posting, mis. 'sekarang' atau '2026-11-20 15:30 WIB'")
+        if nama == "simpan":
+            p.add_argument("--akun", default=AKUN_UTAMA, type=akun_type, help="Akun Threads tujuan (default: utama)")
         p.add_argument("--tanggal", default=hari_ini())
         p.set_defaults(fn=fn)
     p = sub.add_parser("status"); p.add_argument("--tanggal", default=hari_ini()); p.set_defaults(fn=cmd_status)

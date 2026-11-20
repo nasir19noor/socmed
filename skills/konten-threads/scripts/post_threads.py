@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """Posting opsi yang sudah disetujui ke Threads (utas berantai + gambar di postingan pertama).
 
-  python3 post_threads.py --slot pagi            # posting slot pagi hari ini
+  python3 post_threads.py --slot pagi            # posting slot pagi hari ini (ke akun slot itu)
   python3 post_threads.py --slot pagi --dry-run  # simulasi tanpa memanggil API
-  python3 post_threads.py --refresh-token        # perpanjang long-lived token (berlaku 60 hari)
-  python3 post_threads.py --cek                  # cek token & akun
+  python3 post_threads.py --refresh-token [--akun A]  # perpanjang long-lived token (60 hari)
+  python3 post_threads.py --cek [--akun A]       # cek token & akun
+  python3 post_threads.py --daftar-akun          # akun yang disiapkan (tanpa menampilkan token)
 
-Env: THREADS_USER_ID, THREADS_ACCESS_TOKEN, IMGBB_API_KEY (untuk hosting gambar)
+Beberapa akun: akun `utama` memakai THREADS_USER_ID / THREADS_ACCESS_TOKEN / THREADS_HANDLE;
+akun lain, mis. `bisnis`, memakai nama yang sama berakhiran _BISNIS. Slot di antrian mencatat
+akunnya, jadi --slot selalu memposting ke akun yang benar.
+
+Env: THREADS_USER_ID[_AKUN], THREADS_ACCESS_TOKEN[_AKUN], IMGBB_API_KEY (untuk hosting gambar)
 Kode keluar: 0 sukses, 2 belum disetujui/sudah diposting/dilewati, 1 error.
 """
 import argparse
@@ -25,6 +30,15 @@ import antrian  # noqa: E402
 
 API = "https://graph.threads.net/v1.0"
 ENV_FILE = Path(os.path.expanduser("~/.openclaw/.env"))
+
+# Akun yang sedang dipakai; diganti oleh --akun atau oleh akun slot yang diposting.
+AKUN = antrian.AKUN_UTAMA
+
+
+def nama_env(dasar: str, akun: str = None) -> str:
+    """THREADS_ACCESS_TOKEN untuk akun utama, THREADS_ACCESS_TOKEN_BISNIS untuk akun bisnis."""
+    akun = akun or AKUN
+    return dasar if akun == antrian.AKUN_UTAMA else f"{dasar}_{akun.upper()}"
 
 
 def muat_env():
@@ -48,17 +62,31 @@ def http(method, url, data=None, timeout=60):
 
 
 def token():
-    t = os.environ.get("THREADS_ACCESS_TOKEN")
+    t = os.environ.get(nama_env("THREADS_ACCESS_TOKEN"))
     if not t:
-        sys.exit("THREADS_ACCESS_TOKEN belum diisi di ~/.openclaw/.env")
+        sys.exit(f"Akun {AKUN}: {nama_env('THREADS_ACCESS_TOKEN')} belum diisi di ~/.openclaw/.env")
     return t
 
 
 def user_id():
-    u = os.environ.get("THREADS_USER_ID")
+    u = os.environ.get(nama_env("THREADS_USER_ID"))
     if not u:
-        sys.exit("THREADS_USER_ID belum diisi di ~/.openclaw/.env")
+        sys.exit(f"Akun {AKUN}: {nama_env('THREADS_USER_ID')} belum diisi di ~/.openclaw/.env")
     return u
+
+
+def handle(akun: str = None) -> str:
+    return os.environ.get(nama_env("THREADS_HANDLE", akun)) or f"akun {akun or AKUN}"
+
+
+def daftar_akun() -> list:
+    """Akun yang punya token di env: utama, lalu yang lain menurut abjad."""
+    akun = []
+    if os.environ.get("THREADS_ACCESS_TOKEN"):
+        akun.append(antrian.AKUN_UTAMA)
+    awalan = "THREADS_ACCESS_TOKEN_"
+    akun += sorted(k[len(awalan):].lower() for k, v in os.environ.items() if k.startswith(awalan) and v)
+    return akun
 
 
 def unggah_gambar(path: str) -> str:
@@ -107,17 +135,19 @@ def permalink(pid):
 
 
 def jalankan(slot, tanggal, dry):
+    global AKUN
     d = antrian.muat(tanggal)
     s = d["slot"].get(slot)
     if not s:
         print(f"Belum ada usulan slot {slot} ({tanggal})."); sys.exit(2)
     if s["status"] != "disetujui":
         print(f"Slot {slot} berstatus '{s['status']}', tidak diposting."); sys.exit(2)
+    AKUN = antrian.akun_slot(s)
     o = s["opsi"][s["disetujui"] - 1]
     posts, tag, gbr = o["posts"], o.get("tag") or None, o.get("gambar")
 
     if dry:
-        print(f"[DRY-RUN] slot {slot}, opsi {s['disetujui']}, tag={tag}, gambar={gbr}")
+        print(f"[DRY-RUN] slot {slot} → {handle()} ({AKUN}), opsi {s['disetujui']}, tag={tag}, gambar={gbr}")
         for i, t in enumerate(posts, 1):
             print(f"--- [{i}/{len(posts)}] ({antrian.panjang_threads(t)} karakter)\n{t}")
         return
@@ -133,7 +163,7 @@ def jalankan(slot, tanggal, dry):
             time.sleep(4)
     link = permalink(ids[0])
     antrian.tandai_terposting(tanggal, slot, link, ids)
-    print(f"✅ Terposting slot {slot} ({len(ids)} postingan): {link or ids[0]}")
+    print(f"✅ Terposting slot {slot} di {handle()} ({len(ids)} postingan): {link or ids[0]}")
 
 
 def refresh():
@@ -141,18 +171,19 @@ def refresh():
              + urllib.parse.urlencode({"grant_type": "th_refresh_token", "access_token": token()}))
     baru = r["access_token"]
     hari = int(r.get("expires_in", 0)) // 86400
+    kunci = nama_env("THREADS_ACCESS_TOKEN")
     teks = ENV_FILE.read_text() if ENV_FILE.exists() else ""
-    baris = [b for b in teks.splitlines() if not b.startswith("THREADS_ACCESS_TOKEN=")]
-    baris.append(f"THREADS_ACCESS_TOKEN={baru}")
+    baris = [b for b in teks.splitlines() if not b.startswith(f"{kunci}=")]
+    baris.append(f"{kunci}={baru}")
     ENV_FILE.write_text("\n".join(baris) + "\n")
-    print(f"Token diperbarui, berlaku ±{hari} hari. Restart gateway: openclaw gateway restart")
+    print(f"Token akun {AKUN} diperbarui, berlaku ±{hari} hari. Restart gateway: openclaw gateway restart")
 
 
 def cek():
     r = http("GET", f"{API}/me?fields=id,username&access_token={token()}")
-    print(f"Token OK. Akun @{r.get('username')} id={r.get('id')}")
-    if r.get("id") != os.environ.get("THREADS_USER_ID"):
-        print(f"⚠️ THREADS_USER_ID di .env berbeda; seharusnya {r.get('id')}")
+    print(f"Token OK. Akun {AKUN}: @{r.get('username')} id={r.get('id')}")
+    if r.get("id") != os.environ.get(nama_env("THREADS_USER_ID")):
+        print(f"⚠️ {nama_env('THREADS_USER_ID')} di .env berbeda; seharusnya {r.get('id')}")
 
 
 def main():
@@ -163,9 +194,20 @@ def main():
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--refresh-token", action="store_true")
     ap.add_argument("--cek", action="store_true")
+    ap.add_argument("--akun", type=antrian.akun_type, default=antrian.AKUN_UTAMA,
+                    help="Akun untuk --cek / --refresh-token (--slot memakai akun slotnya)")
+    ap.add_argument("--daftar-akun", action="store_true")
     a = ap.parse_args()
+    global AKUN
+    AKUN = a.akun
     try:
-        if a.refresh_token:
+        if a.daftar_akun:
+            akun = daftar_akun()
+            if not akun:
+                print("Belum ada akun: isi THREADS_ACCESS_TOKEN di ~/.openclaw/.env")
+            for nama in akun:
+                print(f"{nama}\t{handle(nama)}")
+        elif a.refresh_token:
             refresh()
         elif a.cek:
             cek()

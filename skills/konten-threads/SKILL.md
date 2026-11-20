@@ -1,7 +1,7 @@
 ---
 name: konten-threads
 description: Riset topik tren Indonesia & Purwokerto, susun usulan konten Threads berbahasa Indonesia lengkap dengan visual, kirim ke WhatsApp untuk disetujui, lalu posting ke Threads. Dipakai oleh cron pagi/siang/malam, oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
-version: 1.3.0
+version: 1.4.0
 metadata:
   openclaw:
     requires:
@@ -31,6 +31,21 @@ Data antrian: `~/.openclaw/workspace/konten-threads/` (dibuat otomatis oleh skri
 | `malam` | 19.15 WIB      | 20.00 WIB   | **Pendek**: 1 postingan, nada lebih santai/reflektif |
 
 Batas Threads: **500 karakter per postingan** (emoji dihitung sesuai byte UTF-8 — hemat emoji), **1 tag topik per postingan**, maks. 5 tautan.
+
+## Akun Threads
+
+Pemilik bisa punya **beberapa akun Threads**. Daftarnya (nama + handle, tanpa token):
+`{SKILL_DIR}/scripts/jalankan post_threads --daftar-akun` → mis. `utama @saya`, `bisnis @saya.bisnis`.
+
+- Akun **`utama`** = akun yang dipakai jadwal pagi/siang/malam (Mode 1 & 3). Slot terjadwal selalu `utama`.
+- Akun lain hanya **sesuai permintaan** lewat Mode 4: pemilik menyebut akunnya, mis.
+  `threads @bisnis parenting pendek` atau `threads akun bisnis …`. Tanpa sebutan akun → `utama`.
+  Jika akun yang disebut tidak ada di daftar, sebutkan akun yang tersedia dan tanyakan maksudnya.
+- **Semua akun memakai gaya bahasa, contoh, dan aturan yang sama**; yang berbeda hanya tujuan posting.
+- Akun dicatat di antrian saat menyimpan usulan (`antrian simpan --akun <nama>`); `post_threads --slot` otomatis
+  memposting ke akun slot itu. Jangan pernah menulis token di pesan atau file.
+- Setiap usulan, konfirmasi, dan laporan posting **menyebut handle akunnya**, agar pemilik tidak keliru menyetujui
+  konten untuk akun yang salah. Jika hanya ada satu akun, cukup tanpa sebutan akun.
 
 ## Mode 1 — Membuat usulan (dipanggil cron: "Jalankan skill konten-threads: slot=…")
 
@@ -117,6 +132,8 @@ kecuali pemilik menyebut slot. Pesan yang diawali "threads" selalu ditangani Mod
 - **Permintaan bebas**, mis. "buatkan konten tema parenting gen alpha", "analisa tren buku minggu ini":
   - *Analisa*: riset lalu kirim ringkasan 5–8 poin + 3 ide konten (dengan sumber).
   - *Buatkan konten*: jalankan Mode 1 langkah 1–6 dengan tema tersebut. Tanyakan slot tujuan jika tidak disebut (default: slot terdekat yang belum disetujui).
+    Jika pemilik menyebut akun selain `utama` (mis. "buatkan konten untuk @bisnis …"), tangani lewat **Mode 4** dengan akun itu —
+    slot terjadwal hanya untuk `utama`.
 
 ## Mode 3 — Posting (dipanggil cron: "Posting slot=…")
 
@@ -125,12 +142,14 @@ kecuali pemilik menyebut slot. Pesan yang diawali "threads" selalu ditangani Mod
 ```
 - Skrip hanya memposting opsi yang **sudah disetujui**. Jika belum ada yang disetujui, skrip keluar dengan kode 2 → kirim WA: "⏰ Slot X belum disetujui, tidak diposting. Balas OK n untuk posting sekarang."
 - Jika sukses, kirim WA berisi tautan postingan dari output skrip.
-- Jika gagal (token kedaluwarsa, dsb.), kirim pesan error singkat ke pemilik. Untuk token: sarankan `{SKILL_DIR}/scripts/jalankan post_threads --refresh-token`.
+- Jika gagal (token kedaluwarsa, dsb.), kirim pesan error singkat ke pemilik, sebutkan akunnya. Untuk token: sarankan
+  `{SKILL_DIR}/scripts/jalankan post_threads --refresh-token --akun <nama>`.
 
 ## Mode 4 — Trigger manual dari WhatsApp (kata kunci "threads")
 
 **Pemicu:** pesan dari **{{PEMILIK}}** yang isinya `threads` atau diawali `threads` (huruf besar/kecil bebas),
-mis. `threads`, `Threads parenting pendek`, `threads buku panjang kutipan sekarang`.
+mis. `threads`, `Threads parenting pendek`, `threads buku panjang kutipan sekarang`, `threads @bisnis teknologi`.
+**Akun tujuan:** `@nama` atau "akun nama" di pesan pemicu (lihat bagian *Akun Threads*); tidak disebut → `utama`.
 Pesan dari nomor lain → balas: "Maaf, fitur Threads hanya untuk pemilik akun." dan berhenti.
 
 ### Langkah A — Tanya-jawab (wizard)
@@ -172,7 +191,7 @@ Aturan menafsirkan jawaban:
   (salin ke `~/.openclaw/workspace/konten-threads/gambar/<tanggal>-<slot>-foto.jpg`) dan pakai sebagai `gambar` untuk semua opsi.
   Jangan memakai foto yang memperlihatkan wajah orang lain tanpa konfirmasi pemilik.
 
-Konfirmasi singkat sebelum bekerja, mis.: "Oke: Buku · pendek · kutipan · posting langsung setelah OK. Aku riset dulu ya ⏳"
+Konfirmasi singkat sebelum bekerja, mis.: "Oke: Buku · pendek · kutipan · posting langsung setelah OK · ke @saya.bisnis. Aku riset dulu ya ⏳"
 
 ### Langkah B — Buat usulan
 1. Dapatkan nama slot manual: `{SKILL_DIR}/scripts/jalankan antrian slot-baru` → mis. `manual1`.
@@ -188,13 +207,14 @@ Konfirmasi singkat sebelum bekerja, mis.: "Oke: Buku · pendek · kutipan · pos
      - tanpa gambar → `"gambar": null`
      - desain bebas → ikuti `referensi/desain-bebas.md`: tulis HTML/SVG khusus per opsi (tata letak kedua opsi
        harus berbeda), render dengan `render_html`, periksa hasilnya, perbaiki bila teks terpotong
-   - Simpan: `{SKILL_DIR}/scripts/jalankan antrian simpan --slot manualN --jadwal "<langsung | HH.MM WIB>"` (JSON via stdin).
-   - Judul pesan usulan: `🧵 Usulan manual (manualN) — Opsi N/2`.
+   - Simpan: `{SKILL_DIR}/scripts/jalankan antrian simpan --slot manualN --akun <nama> --jadwal "<langsung | HH.MM WIB>"` (JSON via stdin).
+   - Judul pesan usulan: `🧵 Usulan manual (manualN) untuk @handle — Opsi N/2`.
    - Pesan penutup: `Balas: OK 1 / OK 2, "revisi 1: ...", "ganti topik", atau "batal".`
 
 ### Langkah C — Setelah pemilik membalas OK n
 - `{SKILL_DIR}/scripts/jalankan antrian setujui --slot manualN --opsi n`
-- Waktu **langsung** → segera jalankan `{SKILL_DIR}/scripts/jalankan post_threads --slot manualN` lalu kirim tautannya.
+- Waktu **langsung** → segera jalankan `{SKILL_DIR}/scripts/jalankan post_threads --slot manualN` lalu kirim tautannya
+  (skrip memposting ke akun yang tercatat di slot itu).
 - Waktu **jam tertentu** (WIB) → buat cron sekali jalan. Ubah ke UTC (WIB − 7 jam), pastikan waktunya di masa depan:
   ```bash
   openclaw cron add --name "Threads posting manualN <tanggal>" --at "<YYYY-MM-DDTHH:MM:00Z>" \
@@ -202,7 +222,7 @@ Konfirmasi singkat sebelum bekerja, mis.: "Oke: Buku · pendek · kutipan · pos
     --message "Jalankan skill konten-threads Mode 3: {SKILL_DIR}/scripts/jalankan post_threads --slot manualN --tanggal <YYYY-MM-DD> . Laporkan hasilnya singkat." \
     --announce --channel whatsapp --to "{{PEMILIK}}"
   ```
-  Balas: "✅ Opsi n dijadwalkan posting jam HH.MM WIB."
+  Balas: "✅ Opsi n dijadwalkan posting jam HH.MM WIB ke @handle."
 - Revisi/batal mengikuti Mode 2 (gunakan slot `manualN`).
 
 Konteks percakapan manual berlaku sampai konten diposting/dibatalkan. Jika pemilik mengirim "threads" lagi di tengah jalan,

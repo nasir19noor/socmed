@@ -137,7 +137,7 @@ Bot lalu mengirim 2 opsi. Balas `OK 1` untuk menyetujui, dan konten akan diposti
 | `revisi 3: lebih santai, tambah sudut Purwokerto` | opsi 3 ditulis ulang |
 | `ganti topik` | 3 usulan baru |
 | `skip` | slot dilewati |
-| `status` | ringkasan hari ini |
+| `status` | ringkasan hari ini (slot akun lain ditandai `[bisnis]`) |
 | `contoh: <teks postingan Anda>` | disimpan sebagai acuan gaya bahasa |
 | `daftar contoh` / `hapus contoh 3` | kelola contoh gaya |
 | `buatkan konten tema parenting gen alpha untuk malam` | usulan bertema |
@@ -164,8 +164,29 @@ Workflow ini berjalan **di server itu sendiri**, lewat self-hosted runner. Pasan
 `THREADS_PEMILIK` tetap harus ada di `~/.openclaw/.env` — workflow berhenti dengan pesan jelas jika belum.
 Cron tidak perlu didaftarkan ulang saat deploy.
 
+## Beberapa akun Threads
+
+Akun yang sekarang menjadi akun **`utama`**: jadwal pagi/siang/malam selalu ke akun ini. Akun lain diposting
+**hanya sesuai permintaan**, dengan gaya bahasa dan contoh yang sama; persetujuan tetap dari nomor pemilik.
+
+**Menambah akun** (mis. `bisnis`):
+1. Di aplikasi Meta yang sama, tambahkan akun Threads itu sebagai *Threads Tester* (langkah 3 di atas), terima
+   undangannya dari akun tersebut, lalu buat long-lived token untuknya.
+2. Tambahkan ke `~/.openclaw/.env` (lihat `env.example`):
+   ```bash
+   THREADS_USER_ID_BISNIS=...
+   THREADS_ACCESS_TOKEN_BISNIS=...
+   THREADS_HANDLE_BISNIS=@akunbisnis
+   ```
+3. Cek: `jalankan post_threads --cek --akun bisnis`, lalu `jalankan post_threads --daftar-akun`.
+4. `openclaw gateway restart`.
+
+**Memakai**: sebut akunnya di pesan pemicu, mis. `threads @bisnis teknologi pendek` atau `threads akun bisnis …`.
+Tanpa sebutan akun, konten untuk `utama`. Setiap usulan menyebut handle tujuannya, jadi periksa sebelum `OK`.
+
 ## Perawatan
-- **Token Threads** berlaku 60 hari. Perpanjang tiap bulan dengan `post_threads.py --refresh-token`, atau tambahkan cron bulanan untuk itu.
+- **Token Threads** berlaku 60 hari, per akun. Perpanjang tiap bulan dengan `jalankan post_threads --refresh-token`
+  (akun lain: `--refresh-token --akun bisnis`), atau tambahkan cron bulanan untuk itu.
 - Riwayat & antrian: `~/.openclaw/workspace/konten-threads/antrian/` (satu file JSON per hari).
 - Ubah gaya tulisan di `referensi/gaya-bahasa.md`, sumber di `referensi/sumber-tren.md`, warna/desain di `templates/visual.html`.
 - Konten **tidak pernah** diposting tanpa balasan "OK" dari Anda.
