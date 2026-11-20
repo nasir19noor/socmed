@@ -146,13 +146,17 @@ Bot lalu mengirim 2 opsi. Balas `OK 1` untuk menyetujui, dan konten akan diposti
 ## Deploy otomatis (GitHub Actions)
 
 Setiap push ke `main` yang mengubah `skills/`, `pasang.sh` atau `AGENTS-tambahan.md` menjalankan
-`.github/workflows/deploy.yml` di server OpenClaw: memeriksa skrip, memasang skill (`pasang.sh`, yaitu
-salin `skills/konten-threads` ke `~/.openclaw/workspace/skills/`), `chmod +x` skrip, lalu
-`openclaw gateway restart`. Bisa juga dijalankan manual dari tab **Actions → Deploy konten-threads → Run workflow**.
+`.github/workflows/deploy.yml` di server OpenClaw: memeriksa skrip, **mengosongkan
+`~/.openclaw/workspace/skills/`** (contoh gaya yang tersimpan dari WhatsApp tetap dipertahankan), memasang skill
+(`pasang.sh`, yaitu salin `skills/konten-threads` ke `~/.openclaw/workspace/skills/`), `chmod +x` skrip, lalu
+`openclaw gateway restart`.
+
+> ⚠️ Karena folder `skills/` dikosongkan setiap deploy, skill lain yang dipasang manual di server ikut terhapus.
+> Simpan skill lain di repo ini juga, atau pasang di luar folder `skills/` itu. Bisa juga dijalankan manual dari tab **Actions → Deploy konten-threads → Run workflow**.
 
 Workflow ini berjalan **di server itu sendiri**, lewat self-hosted runner. Pasang sekali, sebagai user `openclaw`:
 1. GitHub → repo ini → **Settings → Actions → Runners → New self-hosted runner** (Linux), ikuti perintahnya
-   di folder mis. `~/actions-runner`. Saat `config.sh` menanyakan label, tambahkan **`openclaw`**.
+   di folder mis. `~/actions-runner`. Saat `config.sh` menanyakan label, tambahkan **`contabo-2-openclaw`**.
 2. Jalankan sebagai layanan: `sudo ./svc.sh install openclaw && sudo ./svc.sh start`.
 3. Pastikan `openclaw` ada di PATH runner: jika `command -v openclaw` menunjuk ke folder di luar PATH
    standar, tambahkan folder itu ke `~/actions-runner/.path`, lalu `sudo ./svc.sh stop && sudo ./svc.sh start`.

@@ -43,6 +43,26 @@ jobs:
       # in ~/.openclaw/.env; the repo only says {{PEMILIK}}), keeps the
       # style examples the owner saved from WhatsApp, and keeps the
       # "threads" rule in AGENTS.md current. A bare cp would do neither.
+      # A clean slate: everything under ~/.openclaw/workspace/skills/ goes,
+      # so files removed from the repo do not linger on the host — EXCEPT
+      # the style examples the owner saved from WhatsApp, which exist only
+      # there. They are set aside first and put back for pasang.sh to keep.
+      - name: Remove everything under ~/.openclaw/workspace/skills/
+        run: |
+          SKILLS="$HOME/.openclaw/workspace/skills"
+          CONTOH="$SKILLS/konten-threads/referensi/contoh-postingan.md"
+          SIMPAN="$RUNNER_TEMP/contoh-postingan.md"
+          rm -f "$SIMPAN"
+          if [ -f "$CONTOH" ]; then cp "$CONTOH" "$SIMPAN"; fi
+          mkdir -p "$SKILLS"
+          find "$SKILLS" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          if [ -f "$SIMPAN" ]; then
+            mkdir -p "$(dirname "$CONTOH")"
+            cp "$SIMPAN" "$CONTOH"
+            echo "Contoh gaya disimpan, akan dipertahankan."
+          fi
+          ls -A "$SKILLS"
+
       - name: Copy the skill to OpenClaw
         run: bash pasang.sh
 

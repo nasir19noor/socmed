@@ -39,9 +39,14 @@ contoh-visual/                  sample renders (reference only, not used at runt
 **Deploy**: `.github/workflows/deploy.yml` on push to `main` (paths
 `skills/**`, `pasang.sh`, `AGENTS-tambahan.md`) or by hand. It runs on a
 **self-hosted runner on the OpenClaw host** (labels `[self-hosted,
-openclaw]`, registered as the `openclaw` user — the same pattern as the
-Contabo runners in lantip and nasir.id): syntax-check the scripts, `bash
-pasang.sh`, `chmod +x` the scripts, `openclaw gateway restart`. Cron jobs
+contabo-2-openclaw]`, registered as the `openclaw` user — the same pattern
+as the Contabo runners in lantip and nasir.id): syntax-check the scripts,
+**empty `~/.openclaw/workspace/skills/` entirely** (so files deleted from
+the repo do not linger — and any skill installed there by hand goes too),
+`bash pasang.sh`, `chmod +x` the scripts, `openclaw gateway restart`. The
+emptying step sets `konten-threads/referensi/contoh-postingan.md` aside in
+`$RUNNER_TEMP` and puts it back first: the owner's saved style examples
+exist only on the host and must survive every deploy. Cron jobs
 are not touched; `cron-setup.sh` stays a one-time manual step.
 
 Nothing here is a service or a build: `pasang.sh` copies the skill folder
