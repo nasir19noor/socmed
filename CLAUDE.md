@@ -99,9 +99,12 @@ resources** except Google Fonts, and warns when content overflows
 **Accounts**: several Threads accounts, one approver (the owner), one voice.
 `utama` uses `THREADS_USER_ID` / `THREADS_ACCESS_TOKEN` / `THREADS_HANDLE`;
 another account `x` uses the same names suffixed `_X`
-(`post_threads.nama_env`). The scheduled slots `pagi`/`siang`/`malam` are
-always `utama` (`antrian simpan` refuses another account there); other
-accounts post only through manual slots (`threads @bisnis …`). Each slot
+(`post_threads.nama_env`). The scheduled slots `pagi`/`siang`/`malam` go
+to the **scheduled account**, `THREADS_AKUN_JADWAL` in `.env` (default
+`utama`; `antrian.akun_jadwal`, which loads `.env` itself —
+`antrian.muat_env` is the one loader, `post_threads` reuses it).
+`antrian simpan` fills it in for scheduled slots and refuses any other;
+manual slots default to `utama`, or `--akun` (`threads @bisnis …`). Each slot
 stores its `akun`, and `post_threads --slot` posts to that account, so a
 one-shot cron needs no account argument. `--daftar-akun` lists accounts
 from the env (names and handles only); `--cek` / `--refresh-token` take

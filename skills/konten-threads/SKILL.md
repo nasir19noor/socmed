@@ -1,7 +1,7 @@
 ---
 name: konten-threads
 description: Riset topik tren Indonesia & Purwokerto, susun usulan konten Threads berbahasa Indonesia lengkap dengan visual, kirim ke WhatsApp untuk disetujui, lalu posting ke Threads. Dipakai oleh cron pagi/siang/malam, oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
-version: 1.4.0
+version: 1.5.0
 metadata:
   openclaw:
     requires:
@@ -35,9 +35,11 @@ Batas Threads: **500 karakter per postingan** (emoji dihitung sesuai byte UTF-8 
 ## Akun Threads
 
 Pemilik bisa punya **beberapa akun Threads**. Daftarnya (nama + handle, tanpa token):
-`{SKILL_DIR}/scripts/jalankan post_threads --daftar-akun` → mis. `utama @saya`, `bisnis @saya.bisnis`.
+`{SKILL_DIR}/scripts/jalankan post_threads --daftar-akun` → mis. `utama @saya`, `bisnis @saya.bisnis (posting terjadwal)`.
 
-- Akun **`utama`** = akun yang dipakai jadwal pagi/siang/malam (Mode 1 & 3). Slot terjadwal selalu `utama`.
+- **Akun jadwal** = akun yang ditandai `(posting terjadwal)` di daftar itu (diatur pemilik lewat `THREADS_AKUN_JADWAL`
+  di `.env`, default `utama`). Semua slot pagi/siang/malam (Mode 1 & 3) diposting ke akun ini; `antrian simpan`
+  untuk slot terjadwal otomatis memakainya — jangan beri `--akun` untuk slot terjadwal.
 - Akun lain hanya **sesuai permintaan** lewat Mode 4: pemilik menyebut akunnya, mis.
   `threads @bisnis parenting pendek` atau `threads akun bisnis …`. Tanpa sebutan akun → `utama`.
   Jika akun yang disebut tidak ada di daftar, sebutkan akun yang tersedia dan tanyakan maksudnya.
@@ -95,7 +97,7 @@ Pemilik bisa punya **beberapa akun Threads**. Daftarnya (nama + handle, tanpa to
    (Jika tersedia, boleh memakai tool pengiriman pesan bawaan OpenClaw dengan lampiran media sebagai ganti CLI.)
    Format teks usulan:
    ```
-   🗓️ Usulan SLOT (posting JAM WIB) — Opsi N/3
+   🗓️ Usulan SLOT untuk @handle-akun-jadwal (posting JAM WIB) — Opsi N/3
    📌 Topik: ...   🏷️ Tag: ...
    ─────────
    [1/5] isi postingan 1

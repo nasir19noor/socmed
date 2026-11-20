@@ -12,8 +12,9 @@ Perintah:
   slot-baru                         cetak nama slot manual berikutnya hari ini (manual1, manual2, ...)
 
 Slot: pagi, siang, malam (terjadwal) atau manualN (trigger manual dari WhatsApp).
-Akun: tiap slot mencatat akun Threads tujuannya (`--akun`, default `utama`); post_threads.py
-memakai akun itu. Slot terjadwal selalu `utama`; akun lain hanya lewat slot manual.
+Akun: tiap slot mencatat akun Threads tujuannya; post_threads.py memakai akun itu.
+Slot terjadwal (pagi/siang/malam) selalu ke **akun jadwal**: THREADS_AKUN_JADWAL di
+~/.openclaw/.env (default `utama`). Slot manual: `--akun`, default `utama`.
 
 Lokasi data: $KONTEN_DATA_DIR atau ~/.openclaw/workspace/konten-threads/antrian
 """
@@ -55,6 +56,31 @@ def akun_type(s: str) -> str:
 
 def akun_slot(s: dict) -> str:
     return (s or {}).get("akun") or AKUN_UTAMA
+
+
+ENV_FILE = Path(os.path.expanduser("~/.openclaw/.env"))
+
+
+def muat_env() -> None:
+    """Isi os.environ dari ~/.openclaw/.env (yang sudah ada di environment menang)."""
+    if ENV_FILE.exists():
+        for baris in ENV_FILE.read_text().splitlines():
+            baris = baris.strip()
+            if baris and not baris.startswith("#") and "=" in baris:
+                k, v = baris.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
+def akun_jadwal() -> str:
+    """Akun yang dipakai posting terjadwal: THREADS_AKUN_JADWAL, default `utama`."""
+    muat_env()
+    nilai = os.environ.get("THREADS_AKUN_JADWAL", "").strip()
+    if not nilai:
+        return AKUN_UTAMA
+    try:
+        return akun_type(nilai)
+    except argparse.ArgumentTypeError as e:
+        sys.exit(f"THREADS_AKUN_JADWAL tidak sah: {e}")
 
 
 def jam_slot(slot: str, s: dict = None) -> str:
@@ -146,8 +172,14 @@ def cmd_simpan(a):
         err.append("tidak ada opsi")
     if err:
         sys.exit("GAGAL VALIDASI:\n- " + "\n- ".join(err))
-    if a.slot in SLOT and a.akun != AKUN_UTAMA:
-        sys.exit(f"Slot {a.slot} terjadwal selalu untuk akun utama; akun lain lewat slot manual (slot-baru).")
+    if a.slot in SLOT:
+        jadwal = akun_jadwal()
+        if a.akun and a.akun != jadwal:
+            sys.exit(f"Slot {a.slot} terjadwal selalu untuk akun jadwal ({jadwal}, THREADS_AKUN_JADWAL); "
+                     "akun lain lewat slot manual (slot-baru).")
+        a.akun = jadwal
+    else:
+        a.akun = a.akun or AKUN_UTAMA
     d = muat(a.tanggal)
     d["slot"][a.slot] = {"status": "menunggu", "disetujui": None, "opsi": opsi,
                          "akun": a.akun, "jadwal": a.jadwal or None,
@@ -273,7 +305,8 @@ def main():
         if nama in ("simpan", "setujui"):
             p.add_argument("--jadwal", default="", help="Teks jadwal posting, mis. 'sekarang' atau '2026-11-20 15:30 WIB'")
         if nama == "simpan":
-            p.add_argument("--akun", default=AKUN_UTAMA, type=akun_type, help="Akun Threads tujuan (default: utama)")
+            p.add_argument("--akun", default=None, type=akun_type,
+                           help="Akun Threads tujuan (slot terjadwal: akun jadwal; manual: default utama)")
         p.add_argument("--tanggal", default=hari_ini())
         p.set_defaults(fn=fn)
     p = sub.add_parser("status"); p.add_argument("--tanggal", default=hari_ini()); p.set_defaults(fn=cmd_status)

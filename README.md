@@ -166,8 +166,16 @@ Cron tidak perlu didaftarkan ulang saat deploy.
 
 ## Beberapa akun Threads
 
-Akun yang sekarang menjadi akun **`utama`**: jadwal pagi/siang/malam selalu ke akun ini. Akun lain diposting
-**hanya sesuai permintaan**, dengan gaya bahasa dan contoh yang sama; persetujuan tetap dari nomor pemilik.
+Akun yang sekarang menjadi akun **`utama`**. Jadwal pagi/siang/malam diposting ke **akun jadwal** — `utama`, kecuali
+diatur lain (lihat di bawah). Akun lain diposting sesuai permintaan, dengan gaya bahasa dan contoh yang sama;
+persetujuan tetap dari nomor pemilik.
+
+**Memindahkan posting terjadwal ke akun lain** (mis. `bisnis`): tambahkan ke `~/.openclaw/.env`
+```bash
+THREADS_AKUN_JADWAL=bisnis
+```
+lalu `openclaw gateway restart`. Cek dengan `jalankan post_threads --daftar-akun`: akun itu ditandai
+`(posting terjadwal)`. Cron tidak perlu diubah. Usulan yang sudah tersimpan sebelum pengaturan ini tetap ke akun lamanya.
 
 **Menambah akun** (mis. `bisnis`):
 1. Di aplikasi Meta yang sama, tambahkan akun Threads itu sebagai *Threads Tester* (langkah 3 di atas), terima
