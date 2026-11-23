@@ -59,7 +59,7 @@ re-run after every update.
 
 ## How it works
 
-**Four modes** (SKILL.md):
+**Five modes** (SKILL.md):
 1. **Proposals** — cron at 06.30 / 12.15 / 19.15 WIB: research, 3 options per
    slot (`pagi` = 4–7-post thread, `siang`/`malam` = one post), render a
    visual each, `antrian simpan`, send each option to WhatsApp.
@@ -70,6 +70,28 @@ re-run after every update.
 4. **Manual trigger** — a message starting with `threads` from the owner: a
    one-message wizard (topic, format, image, when), 2 options in slot
    `manualN`, posted immediately or by a one-shot cron (`--at`, UTC).
+5. **Weekly report** — cron Sunday 21.00 WIB, or `threads laporan [@akun]`:
+   `jalankan laporan buat` prints one block per account; the agent adds 3
+   suggestions, sends one WhatsApp message per account, and stores the
+   suggestions with `laporan saran`.
+
+**Reports** (`laporan.py`, stdlib only — `sqlite3`): Threads Insights
+(`/{user}/threads` since/until, `/{media}/insights` views/likes/replies/
+reposts/quotes/shares, `/{user}/threads_insights` followers_count). Needs
+the token permission `threads_manage_insights`. Data lives in
+`$KONTEN_DATA_DIR/../laporan/` (outside `skills/`, so deploys never wipe
+it): `laporan.db` with tables `postingan`, `metrik` (one row per post per
+fetch, latest wins), `follower` (snapshots), `laporan` (summary JSON +
+`saran`); plus `<akun>/<YYYY-Www>.json|.md` and a generated
+`pelajaran.md`. Week = Monday 00.00 WIB to now; last week is re-fetched
+for final numbers. Follower growth = now minus the latest snapshot at
+least 6 days old, so the first report is only a baseline. Category /
+format / visual / slot come from the queue (`media_ids[0]` of posted
+slots); visual type is inferred (`desain/<stem>.html` = free design,
+`gambar/` = template). A thread's numbers are its first post's. Mode 1
+reads `laporan ringkas --akun` before choosing topics. JSON + SQLite for
+now; PostgreSQL is planned later, so keep the SQL portable (nothing
+SQLite-only beyond `INSERT OR REPLACE` / `ON CONFLICT`).
 
 **Queue** (`antrian.py`): one JSON file per WIB date in
 `$KONTEN_DATA_DIR` (default `~/.openclaw/workspace/konten-threads/antrian/`).
@@ -152,6 +174,11 @@ from the env (names and handles only); `--cek` / `--refresh-token` take
   lines; keep that separator format if you edit the file by hand.
 
 ## Testing
+
+`laporan.py` calls the live API; to test it offline, replace
+`post_threads.http` with a fake returning Graph-shaped JSON (see
+`laporan.insight_postingan` / `daftar_postingan`) and point
+`KONTEN_DATA_DIR` and `HOME` at a temp folder.
 
 There is no test suite. Safe checks that touch nothing live:
 

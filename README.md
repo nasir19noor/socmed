@@ -7,6 +7,8 @@ Alur:
                                            → 3 opsi konten + visual PNG → WA pemilik
 Anda balas "OK 2" / "revisi 1: ..." / "skip" (dari nomor pemilik)
 08.00 / 13.00 / 20.00 WIB  cron "posting" → posting opsi yang disetujui ke Threads → tautan dikirim ke WA
+Minggu 21.00 WIB           cron "laporan" → laporan mingguan per akun (engagement, reply, follower, saran) → WA
+                                           → disimpan sebagai acuan usulan berikutnya
 Kapan saja: kirim "threads" dari nomor pemilik → bot bertanya topik, format, gambar, waktu → usulan → OK → posting
           atau chat bebas: "buatkan konten tema X" / "analisa tren buku minggu ini"
 ```
@@ -30,8 +32,9 @@ skills/konten-threads/
   scripts/ragam.py          ingatan gaya visual agar gambar tidak seragam
   scripts/antrian.py        antrian usulan & persetujuan per slot
   scripts/post_threads.py   posting ke Threads API (utas berantai + gambar)
+  scripts/laporan.py        laporan mingguan dari Threads Insights → SQLite + JSON/MD + pesan WA
 pasang.sh                   memasang skill + mengisi nomor pemilik dari ~/.openclaw/.env
-cron-setup.sh               mendaftarkan 6 cron job
+cron-setup.sh               mendaftarkan 7 cron job
 .github/workflows/deploy.yml  deploy otomatis ke server OpenClaw (self-hosted runner)
 AGENTS-tambahan.md          aturan pemicu kata "threads" (tempel ke AGENTS.md)
 env.example                 variabel yang perlu diisi
@@ -76,7 +79,7 @@ Uji:
 
 ### 3. Siapkan akses Threads API
 1. Buka developers.facebook.com → **Create App** → pilih use case **Access the Threads API**.
-2. Tambahkan izin `threads_basic` dan `threads_content_publish`.
+2. Tambahkan izin `threads_basic`, `threads_content_publish`, dan `threads_manage_insights` (untuk laporan mingguan).
 3. Di **App roles → Roles**, tambahkan akun Threads Anda sebagai *Threads Tester*, lalu terima undangannya di aplikasi Threads (Settings → Account → Website permissions).
 4. Pakai **User Token Generator** di dashboard aplikasi untuk membuat token, lalu tukar ke **long-lived token** (berlaku 60 hari dan bisa diperpanjang).
 5. Isi `~/.openclaw/.env` sesuai `env.example`, lalu cek:
@@ -143,6 +146,33 @@ Bot lalu mengirim 2 opsi. Balas `OK 1` untuk menyetujui, dan konten akan diposti
 | `daftar contoh` / `hapus contoh 3` | kelola contoh gaya |
 | `buatkan konten tema parenting gen alpha untuk malam` | usulan bertema |
 | `analisa tren teknologi minggu ini` | ringkasan + ide konten |
+| `threads laporan` / `threads laporan @bisnis` | laporan mingguan sekarang (semua akun / satu akun) |
+
+## Laporan mingguan
+
+Setiap **Minggu 21.00 WIB** bot mengirim **satu pesan WA per akun** (@nasir19noor = `utama`,
+@lantip.ai.id = `bisnis`): jumlah utas, views, interaksi dan rasionya, **penambahan follower**, utas dengan
+interaksi / reply / views terbanyak dan yang paling sepi, pola per kategori, waktu, format, dan jenis visual,
+angka final minggu lalu, tautan 3 utas teratas, lalu 3 saran minggu depan dari Claude.
+
+- **Rentang:** Senin 00.00 WIB s.d. saat laporan dibuat; postingan yang dibuat manual di aplikasi Threads ikut dihitung.
+  Interaksi = like + reply + repost + quote + share; metrik sebuah utas diambil dari postingan pertamanya.
+- **Follower:** API hanya memberi jumlah saat ini, jadi laporan pertama mencatat titik awal; penambahan tampil mulai
+  laporan berikutnya. Catat titik awal lebih cepat: `jalankan laporan snapshot`.
+- **Disimpan** di `~/.openclaw/workspace/konten-threads/laporan/`: `laporan.db` (SQLite: postingan, metrik per
+  pengambilan, follower, laporan + saran), `<akun>/<YYYY-Www>.json` dan `.md`, serta `pelajaran.md`
+  (4 laporan terakhir + tren 8 minggu per akun). Agen membacanya (`jalankan laporan ringkas --akun …`) sebelum
+  menyusun usulan.
+- **Syarat:** token setiap akun punya izin `threads_manage_insights`. Token lama belum punya: tambahkan izinnya di
+  aplikasi Meta, buat token baru untuk tiap akun, isi `~/.openclaw/.env`, lalu `openclaw gateway restart`.
+- **Sudah menjalankan `cron-setup.sh` sebelumnya?** Jangan ulangi (job lain jadi dobel); tambahkan job ini saja
+  (ganti `<nomor pemilik>`):
+  ```bash
+  openclaw cron add --name "Threads laporan mingguan" --cron "0 21 * * 0" --tz "Asia/Jakarta" \
+    --session isolated \
+    --message "Jalankan skill konten-threads Mode 5: laporan mingguan semua akun, satu pesan WA per akun ke <nomor pemilik>, lalu simpan sarannya." \
+    --announce --channel whatsapp --to "<nomor pemilik>"
+  ```
 
 ## Deploy otomatis (GitHub Actions)
 
@@ -197,6 +227,7 @@ Tanpa sebutan akun, konten untuk `utama`. Setiap usulan menyebut handle tujuanny
 - **Token Threads** berlaku 60 hari, per akun. Perpanjang tiap bulan dengan `jalankan post_threads --refresh-token`
   (akun lain: `--refresh-token --akun bisnis`), atau tambahkan cron bulanan untuk itu.
 - Riwayat & antrian: `~/.openclaw/workspace/konten-threads/antrian/` (satu file JSON per hari).
+- Laporan: `~/.openclaw/workspace/konten-threads/laporan/` (tidak tersentuh deploy; cadangkan bersama workspace).
 - Ubah gaya tulisan di `referensi/gaya-bahasa.md`, sumber di `referensi/sumber-tren.md`, warna/desain di `templates/visual.html`
   (tata letak) dan `scripts/render_visual.py` (palet & font), arah seni desain bebas di `referensi/desain-bebas.md`.
 - Visual otomatis bervariasi: `render_visual` memilih tata letak (kartu, poster, split, catatan, gelap, bingkai, majalah),

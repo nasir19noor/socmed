@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Mendaftarkan 6 cron job konten Threads di OpenClaw (zona waktu WIB).
+# Mendaftarkan 7 cron job konten Threads di OpenClaw (zona waktu WIB).
+# Sudah pernah dijalankan? Jangan ulangi (job akan dobel); tambahkan job baru saja — lihat README.
 # Jalankan sekali: bash cron-setup.sh
 set -euo pipefail
 
@@ -39,6 +40,12 @@ for s in "pagi:0 8" "siang:0 13" "malam:0 20"; do
     --message "Jalankan skill konten-threads Mode 3: ~/.openclaw/workspace/skills/konten-threads/scripts/jalankan post_threads --slot $SLOT . Laporkan hasilnya singkat (tautan postingan, atau alasan tidak diposting)." \
     --announce --channel whatsapp --to "$PEMILIK"
 done
+
+# ---- Laporan mingguan (Minggu 21.00 WIB, setelah posting malam) ----
+openclaw cron add --name "Threads laporan mingguan" --cron "0 21 * * 0" --tz "$TZ_ID" \
+  --session isolated \
+  --message "Jalankan skill konten-threads Mode 5: laporan mingguan semua akun, satu pesan WA per akun ke $PEMILIK, lalu simpan sarannya." \
+  --announce --channel whatsapp --to "$PEMILIK"
 
 openclaw cron list
 echo "Selesai. Uji sekarang: openclaw cron run <id-job-usulan-siang>"

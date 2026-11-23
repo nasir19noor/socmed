@@ -1,7 +1,7 @@
 ---
 name: konten-threads
 description: Riset topik tren Indonesia & Purwokerto, susun usulan konten Threads berbahasa Indonesia lengkap dengan visual, kirim ke WhatsApp untuk disetujui, lalu posting ke Threads. Dipakai oleh cron pagi/siang/malam, oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
-version: 1.6.1
+version: 1.7.0
 metadata:
   openclaw:
     requires:
@@ -58,6 +58,9 @@ Pemilik bisa punya **beberapa akun Threads**. Daftarnya (nama + handle, tanpa to
    Utamakan yang terjadi ≤ 48 jam terakhir. Catat sumber (URL) tiap fakta. Jangan mengarang fakta, angka, atau kutipan.
 2. **Pilih 3 opsi** yang berbeda sudut pandang (mis. 1 tren umum/lokal, 1 niche, 1 bebas). Hindari topik yang sudah dipakai 7 hari terakhir:
    `{SKILL_DIR}/scripts/jalankan antrian riwayat --hari 7`
+   Baca juga pelajaran dari laporan mingguan untuk akun tujuan (kategori, waktu, format, visual, dan utas yang ramai):
+   `{SKILL_DIR}/scripts/jalankan laporan ringkas --akun <akun>`. Jadikan acuan, bukan aturan mutlak: tetap variasikan
+   topik, dan gaya bahasa tetap mengikuti contoh postingan. Jika belum ada laporan, lewati.
 3. **Tulis konten** dengan suara pemilik: **baca dulu `referensi/contoh-postingan.md`** (postingan asli pemilik)
    lalu `referensi/gaya-bahasa.md`. Tiru gaya, ritme, dan panjangnya — jangan menyalin isinya. Pakai "saya", tanpa emoji/hashtag.
    Sebelum disimpan, cek tiap draf: "Apakah ini terdengar seperti contoh-contoh asli?" Jika tidak, tulis ulang.
@@ -154,6 +157,8 @@ kecuali pemilik menyebut slot. Pesan yang diawali "threads" selalu ditangani Mod
 
 ## Mode 4 — Trigger manual dari WhatsApp (kata kunci "threads")
 
+**Pengecualian:** `threads laporan` (boleh dengan `@akun`) → jalankan **Mode 5**, bukan wizard di bawah.
+
 **Pemicu:** pesan dari **{{PEMILIK}}** yang isinya `threads` atau diawali `threads` (huruf besar/kecil bebas),
 mis. `threads`, `Threads parenting pendek`, `threads buku panjang kutipan sekarang`, `threads @bisnis teknologi`.
 **Akun tujuan:** `@nama` atau "akun nama" di pesan pemicu (lihat bagian *Akun Threads*); tidak disebut → `utama`.
@@ -237,6 +242,40 @@ Konfirmasi singkat sebelum bekerja, mis.: "Oke: Buku · pendek · kutipan · pos
 
 Konteks percakapan manual berlaku sampai konten diposting/dibatalkan. Jika pemilik mengirim "threads" lagi di tengah jalan,
 tanyakan: "Masih ada usulan manualN yang belum selesai. Lanjutkan itu atau mulai baru?"
+
+## Mode 5 — Laporan mingguan (cron Minggu 21.00 WIB, atau pesan `threads laporan [@akun]`)
+
+1. Ambil data dan susun laporan (semua akun, atau `--akun <nama>` bila pemilik menyebut satu akun):
+   ```bash
+   {SKILL_DIR}/scripts/jalankan laporan buat
+   ```
+   Keluaran berisi satu blok per akun, diawali `=== @handle (akun <nama>, minggu <YYYY-Www>) ===`.
+   Isinya sudah dihitung skrip dari Threads API: ringkasan, follower, utas teratas, pola, minggu lalu (angka final), tautan.
+   **Jangan mengubah angka apa pun.**
+2. Untuk tiap akun, tulis **3 saran minggu depan** yang konkret dan berdasar pola di blok itu (kategori/waktu/format/visual
+   yang ramai atau sepi, utas dengan reply terbanyak, hook yang berhasil). Jangan mengarang angka. Bila datanya sedikit
+   (≤ 2 utas), katakan bahwa polanya belum bisa disimpulkan.
+3. Kirim **satu pesan WhatsApp per akun**: blok laporan akun itu (tanpa baris `===`), lalu
+   ```
+   💡 Saran minggu depan:
+   1. ...
+   2. ...
+   3. ...
+   ```
+   ```bash
+   openclaw message send --channel whatsapp --target {{PEMILIK}} --message "<laporan + saran>"
+   ```
+4. Simpan saran sebagai acuan utas berikutnya (teks saran lewat stdin):
+   ```bash
+   {SKILL_DIR}/scripts/jalankan laporan saran --akun <nama> --minggu <YYYY-Www> <<'SARAN'
+   1. ...
+   2. ...
+   3. ...
+   SARAN
+   ```
+5. Blok yang berisi `⚠️ Laporan … gagal` dikirim apa adanya ke pemilik (mis. token belum punya izin
+   `threads_manage_insights`), tanpa saran.
+6. Balasan akhir cron cukup ringkas: "Laporan mingguan terkirim (2 akun)."
 
 ## Aturan keamanan konten
 
