@@ -60,13 +60,19 @@ re-run after every update.
 ## How it works
 
 **Five modes** (SKILL.md):
-1. **Proposals** — cron at 06.30 / 12.15 / 19.15 WIB: research, 3 options per
-   slot (`pagi` = 4–7-post thread, `siang`/`malam` = one post), render a
-   visual each, `antrian simpan`, send each option to WhatsApp.
+1. **Proposals** — three batches ("gelombang", `antrian.GELOMBANG`, must
+   match `cron-setup.sh`): 06.30 → `jam08`+`jam10`, 11.00 →
+   `jam12`+`jam14`+`jam16`, 17.00 → `jam18`+`jam20`. One research pass per
+   batch, **2 options per slot**, no repeated topic within a day; `jam08`
+   (`SLOT_PANJANG`) is a 4–7-post thread, the rest one post. One free design
+   per batch, the rest templates. `antrian simpan` per slot, each option
+   to WhatsApp.
 2. **Owner replies** — `OK n`, `revisi n: …`, `ganti topik`, `skip`,
    `status`, `contoh: …`, free requests ("buatkan konten …", "analisa …").
-3. **Posting** — cron at 08.00 / 13.00 / 20.00 WIB:
+3. **Posting** — cron every 2 h, 08.00–20.00 WIB (`jam08` … `jam20`):
    `jalankan post_threads --slot <slot>`; posts only an approved option.
+   Owner approves by hour: `OK 14 2`, several per message; a bare `OK n`
+   only when exactly one slot is waiting, otherwise the agent asks.
 4. **Manual trigger** — a message starting with `threads` from the owner: a
    one-message wizard (topic, format, image, when), 2 options in slot
    `manualN`, posted immediately or by a one-shot cron (`--at`, UTC).
@@ -84,7 +90,8 @@ it): `laporan.db` with tables `postingan`, `metrik` (one row per post per
 fetch, latest wins), `follower` (snapshots), `laporan` (summary JSON +
 `saran`); plus `<akun>/<YYYY-Www>.json|.md` and a generated
 `pelajaran.md`. Week = Monday 00.00 WIB to now; last week is re-fetched
-for final numbers. Follower growth = now minus the latest snapshot at
+for final numbers. The "Waktu" pattern buckets posts by nearest 2-hour
+slot (`waktu_bagian`), so the 7 slots compare directly. Follower growth = now minus the latest snapshot at
 least 6 days old, so the first report is only a baseline. Category /
 format / visual / slot come from the queue (`media_ids[0]` of posted
 slots); visual type is inferred (`desain/<stem>.html` = free design,
@@ -128,7 +135,7 @@ Goal: no two consecutive visuals look alike — don't hard-code a single look.
 **Accounts**: several Threads accounts, one approver (the owner), one voice.
 `utama` uses `THREADS_USER_ID` / `THREADS_ACCESS_TOKEN` / `THREADS_HANDLE`;
 another account `x` uses the same names suffixed `_X`
-(`post_threads.nama_env`). The scheduled slots `pagi`/`siang`/`malam` go
+(`post_threads.nama_env`). The scheduled slots `jam08` … `jam20` go
 to the **scheduled account**, `THREADS_AKUN_JADWAL` in `.env` (default
 `utama`; `antrian.akun_jadwal`, which loads `.env` itself —
 `antrian.muat_env` is the one loader, `post_threads` reuses it).
@@ -185,9 +192,9 @@ There is no test suite. Safe checks that touch nothing live:
 ```bash
 cd skills/konten-threads/scripts
 KONTEN_DATA_DIR=/tmp/antrian ./jalankan antrian slot-baru
-KONTEN_DATA_DIR=/tmp/antrian ./jalankan antrian simpan --slot siang < opsi.json
-KONTEN_DATA_DIR=/tmp/antrian ./jalankan antrian setujui --slot siang --opsi 1
-KONTEN_DATA_DIR=/tmp/antrian ./jalankan post_threads --slot siang --dry-run
+KONTEN_DATA_DIR=/tmp/antrian ./jalankan antrian simpan --slot jam12 < opsi.json
+KONTEN_DATA_DIR=/tmp/antrian ./jalankan antrian setujui --slot jam12 --opsi 1
+KONTEN_DATA_DIR=/tmp/antrian ./jalankan post_threads --slot jam12 --dry-run
 ./jalankan render_visual --kategori lokal --judul "Uji *visual*" --isi "Tes" --out /tmp/uji.png
 ```
 

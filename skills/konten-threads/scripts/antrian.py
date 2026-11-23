@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Antrian usulan konten Threads per tanggal (WIB) dan slot (pagi/siang/malam).
+"""Antrian usulan konten Threads per tanggal (WIB) dan slot (jam08 … jam20).
 
 Perintah:
   simpan   --slot S [--akun A]      JSON {"opsi":[...]} dari stdin (menimpa usulan slot S hari ini)
@@ -11,9 +11,11 @@ Perintah:
   ambil    --slot S                 cetak opsi yang disetujui (JSON)
   slot-baru                         cetak nama slot manual berikutnya hari ini (manual1, manual2, ...)
 
-Slot: pagi, siang, malam (terjadwal) atau manualN (trigger manual dari WhatsApp).
+Slot terjadwal: jam08, jam10, jam12, jam14, jam16, jam18, jam20 (posting tiap 2 jam, 08.00–20.00 WIB;
+jam08 = utas panjang, sisanya pendek), atau manualN (trigger manual dari WhatsApp).
+Usulan dibuat per gelombang (GELOMBANG): pagi → jam08+jam10, siang → jam12–jam16, sore → jam18+jam20.
 Akun: tiap slot mencatat akun Threads tujuannya; post_threads.py memakai akun itu.
-Slot terjadwal (pagi/siang/malam) selalu ke **akun jadwal**: THREADS_AKUN_JADWAL di
+Slot terjadwal selalu ke **akun jadwal**: THREADS_AKUN_JADWAL di
 ~/.openclaw/.env (default `utama`). Slot manual: `--akun`, default `utama`.
 
 Lokasi data: $KONTEN_DATA_DIR atau ~/.openclaw/workspace/konten-threads/antrian
@@ -33,14 +35,22 @@ try:
 except Exception:  # pragma: no cover
     WIB = dt.timezone(dt.timedelta(hours=7))
 
-SLOT = {"pagi": "08:00", "siang": "13:00", "malam": "20:00"}
+SLOT = {f"jam{j:02d}": f"{j:02d}:00" for j in range(8, 21, 2)}  # jam08 … jam20
+# Slot yang formatnya utas panjang (4–7 postingan); slot lain 1 postingan pendek.
+SLOT_PANJANG = {"jam08"}
+# Gelombang usulan: satu putaran riset/usulan menyiapkan beberapa slot sekaligus (cron-setup.sh).
+GELOMBANG = {
+    "pagi": ["jam08", "jam10"],
+    "siang": ["jam12", "jam14", "jam16"],
+    "sore": ["jam18", "jam20"],
+}
 
 
 def slot_type(s: str) -> str:
     """Validasi nama slot untuk argparse."""
     if s in SLOT or re.fullmatch(r"manual\d+", s):
         return s
-    raise argparse.ArgumentTypeError(f"slot tidak dikenal: {s} (pagi/siang/malam/manualN)")
+    raise argparse.ArgumentTypeError(f"slot tidak dikenal: {s} ({', '.join(SLOT)} atau manualN)")
 
 
 AKUN_UTAMA = "utama"
@@ -132,7 +142,7 @@ def validasi_opsi(o: dict, slot: str, idx: int) -> list:
     posts = o.get("posts")
     if not isinstance(posts, list) or not posts:
         return [f"opsi {idx}: 'posts' wajib berupa array tidak kosong"]
-    fmt = o.get("format") or ("panjang" if slot == "pagi" else "pendek")
+    fmt = o.get("format") or ("panjang" if slot in SLOT_PANJANG else "pendek")
     if fmt not in ("panjang", "pendek"):
         return [f"opsi {idx}: format harus 'panjang' atau 'pendek'"]
     o["format"] = fmt

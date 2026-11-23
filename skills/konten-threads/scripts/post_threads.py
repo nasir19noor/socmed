@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Posting opsi yang sudah disetujui ke Threads (utas berantai + gambar di postingan pertama).
 
-  python3 post_threads.py --slot pagi            # posting slot pagi hari ini (ke akun slot itu)
-  python3 post_threads.py --slot pagi --dry-run  # simulasi tanpa memanggil API
+  python3 post_threads.py --slot jam08           # posting slot 08.00 hari ini (ke akun slot itu)
+  python3 post_threads.py --slot jam08 --dry-run # simulasi tanpa memanggil API
   python3 post_threads.py --refresh-token [--akun A]  # perpanjang long-lived token (60 hari)
   python3 post_threads.py --cek [--akun A]       # cek token & akun
   python3 post_threads.py --daftar-akun          # akun yang disiapkan (tanpa menampilkan token)
