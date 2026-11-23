@@ -1,6 +1,7 @@
 # Panduan desain bebas (HTML/SVG → PNG)
 
-Dipakai saat pemilik memilih gambar **"desain bebas"**, dan sebagai pilihan utama untuk gambar postingan.
+Dipakai saat pemilik memilih gambar **"desain bebas"**, dan untuk satu opsi per slot terjadwal.
+Desain harus ringkas: satu file HTML pendek (±150 baris), tanpa ilustrasi SVG yang sangat rumit.
 Kamu bertindak sebagai desainer grafis (art director): buat **satu file HTML mandiri** yang khusus untuk isi
 postingan ini. Tujuannya: feed tidak terlihat seragam. Dua gambar berturut-turut **tidak boleh** terasa
 seperti dari template yang sama.
@@ -70,5 +71,5 @@ template `render_visual`. Desain bebas tidak boleh terlihat seperti itu.
    `{SKILL_DIR}/scripts/jalankan render_html --html <file.html> --out ~/.openclaw/workspace/konten-threads/gambar/<tanggal>-<slot>-<n>.png --arah "<arah>"`
 3. Jika muncul peringatan "isi melebihi kanvas" atau "DESAIN DITOLAK", perbaiki HTML lalu render ulang.
 4. Jika tool membaca gambar tersedia, buka PNG hasilnya dan periksa: teks terbaca, tidak terpotong, tidak bertumpuk,
-   dan tidak mirip gambar sebelumnya. Perbaiki maksimal 2 kali; jika masih gagal, pakai `render_visual`
+   dan tidak mirip gambar sebelumnya. Perbaiki maksimal 1 kali; jika masih gagal, pakai `render_visual`
    (tata letak dipilih otomatis) sebagai cadangan.

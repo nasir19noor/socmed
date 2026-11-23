@@ -15,16 +15,15 @@ Selalu cek tanggal terbit; abaikan yang lebih dari 48 jam untuk "tren", kecuali 
 - Momen lokal: kuliner (mendoan, sroto, getuk goreng), budaya ngapak, event kampus, cuaca/banjir, lalu lintas.
 
 ## Teknologi
-- Kabar AI, gawai, aplikasi, keamanan digital, startup Indonesia
-- Sumber: dailysocial.id, tekno.kompas.com, inet.detik.com, techinasia (ID), The Verge (global)
+- Cloud, AWS, GCP, AI, Cyber security
+- Sumber: techcrunch.com, tekno.kompas.com, inet.detik.com, techinasia (ID), The Verge (global)
 
 ## Buku
 - Rilis/buku laris (Gramedia, Mizan, Gagas Media), festival & penghargaan sastra, adaptasi film
 - Tren baca: BookTok/Bookstagram Indonesia, Goodreads, iPusnas
 
-## Parenting
-- Isu anak & keluarga: screen time, pendidikan (kurikulum, PPDB/SPMB), kesehatan anak (IDAI, Kemenkes), gen alpha
-- Sumber: idai.or.id, kemkes.go.id, theasianparent ID, kumparanMOM, Ayah Bunda
+## Quote
+- Quotes dari bidang teknologi dan bisnis
 
 ## Kalender
 Perhatikan hari besar/nasional, hari peringatan (Hari Guru 25 Nov, Hari Ibu 22 Des, dsb.), libur sekolah, gajian (25–1), dan akhir pekan.

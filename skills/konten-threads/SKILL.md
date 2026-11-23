@@ -1,7 +1,7 @@
 ---
 name: konten-threads
 description: Riset topik tren Indonesia & Purwokerto, susun usulan konten Threads berbahasa Indonesia lengkap dengan visual, kirim ke WhatsApp untuk disetujui, lalu posting ke Threads. Dipakai oleh cron pagi/siang/malam, oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
-version: 1.6.0
+version: 1.6.1
 metadata:
   openclaw:
     requires:
@@ -67,7 +67,7 @@ Pemilik bisa punya **beberapa akun Threads**. Daftarnya (nama + handle, tanpa to
 4. **Buat visual** untuk tiap opsi. **Visual tidak boleh seragam:** opsi dalam satu slot memakai tampilan yang
    berbeda, dan gambar hari ini tidak mirip gambar kemarin. Cek dulu `{SKILL_DIR}/scripts/jalankan ragam`
    (gaya yang dipakai belakangan).
-   **Desain bebas (pilihan utama — minimal 1 opsi tiap slot, dan semua opsi utas pagi):**
+   **Desain bebas — tepat 1 opsi per slot (opsi 1), tidak lebih, agar satu putaran kerja tidak terlalu panjang:**
    ikuti `referensi/desain-bebas.md`: ambil arah seni lewat `jalankan ragam --saran`, tulis HTML/SVG khusus, lalu render:
    `{SKILL_DIR}/scripts/jalankan render_html --html <file.html> --out <file.png> --arah "<arah>"`
    **Template cepat** untuk opsi lainnya — tata letak (7 macam), pasangan font, dan varian palet dipilih otomatis
