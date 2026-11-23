@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Antrian usulan konten Threads per tanggal (WIB) dan slot (jam08 … jam20).
+"""Antrian usulan konten Threads per tanggal (WIB) dan slot (lihat JADWAL).
 
 Perintah:
   simpan   --slot S [--akun A]      JSON {"opsi":[...]} dari stdin (menimpa usulan slot S hari ini)
@@ -10,13 +10,15 @@ Perintah:
   riwayat  [--hari 7]               topik yang sudah diposting/diusulkan N hari terakhir
   ambil    --slot S                 cetak opsi yang disetujui (JSON)
   slot-baru                         cetak nama slot manual berikutnya hari ini (manual1, manual2, ...)
+  jadwal                            jadwal, tema, dan gelombang usulan tiap akun
 
-Slot terjadwal: jam08, jam10, jam12, jam14, jam16, jam18, jam20 (posting tiap 2 jam, 08.00–20.00 WIB;
-jam08 = utas panjang, sisanya pendek), atau manualN (trigger manual dari WhatsApp).
-Usulan dibuat per gelombang (GELOMBANG): pagi → jam08+jam10, siang → jam12–jam16, sore → jam18+jam20.
-Akun: tiap slot mencatat akun Threads tujuannya; post_threads.py memakai akun itu.
-Slot terjadwal selalu ke **akun jadwal**: THREADS_AKUN_JADWAL di
-~/.openclaw/.env (default `utama`). Slot manual: `--akun`, default `utama`.
+Slot terjadwal per akun (JADWAL), masing-masing dengan tema sendiri (TEMA):
+  bisnis (@lantip.ai.id): jam08, jam10, … jam20 — tiap 2 jam 08.00–20.00 WIB
+  utama  (@nasir19noor):  u09, u12, u19 — 09.00, 12.00, 19.00 WIB
+jam08 dan u09 = utas panjang, sisanya pendek. Slot manualN = trigger manual dari WhatsApp.
+Usulan dibuat per gelombang (GELOMBANG, harus sama dengan cron-setup.sh).
+Akun: tiap slot mencatat akun Threads tujuannya; post_threads.py memakai akun itu. Slot terjadwal
+selalu ke akun pemilik slotnya; slot manual: `--akun`, default `utama`.
 
 Lokasi data: $KONTEN_DATA_DIR atau ~/.openclaw/workspace/konten-threads/antrian
 """
@@ -35,14 +37,28 @@ try:
 except Exception:  # pragma: no cover
     WIB = dt.timezone(dt.timedelta(hours=7))
 
-SLOT = {f"jam{j:02d}": f"{j:02d}:00" for j in range(8, 21, 2)}  # jam08 … jam20
+# Jadwal posting otomatis per akun: slot -> jam (WIB).
+JADWAL = {
+    "bisnis": {f"jam{j:02d}": f"{j:02d}:00" for j in range(8, 21, 2)},  # @lantip.ai.id, 7×/hari
+    "utama": {"u09": "09:00", "u12": "12:00", "u19": "19:00"},          # @nasir19noor, 3×/hari
+}
+# Tema konten tiap akun (riset & topik usulan terjadwal mengikuti ini).
+TEMA = {
+    "bisnis": "teknologi (AI, cloud, DevOps) dan bisnis",
+    "utama": "teknologi, parenting, kuliner",
+}
+SLOT = dict(sorted(((s, j) for slot in JADWAL.values() for s, j in slot.items()), key=lambda x: x[1]))
+AKUN_SLOT = {s: a for a, slot in JADWAL.items() for s in slot}
 # Slot yang formatnya utas panjang (4–7 postingan); slot lain 1 postingan pendek.
-SLOT_PANJANG = {"jam08"}
-# Gelombang usulan: satu putaran riset/usulan menyiapkan beberapa slot sekaligus (cron-setup.sh).
+SLOT_PANJANG = {"jam08", "u09"}
+# Gelombang usulan: satu putaran riset/usulan menyiapkan beberapa slot satu akun (cron-setup.sh).
 GELOMBANG = {
     "pagi": ["jam08", "jam10"],
     "siang": ["jam12", "jam14", "jam16"],
     "sore": ["jam18", "jam20"],
+    "utama-pagi": ["u09"],
+    "utama-siang": ["u12"],
+    "utama-malam": ["u19"],
 }
 
 
@@ -79,18 +95,6 @@ def muat_env() -> None:
             if baris and not baris.startswith("#") and "=" in baris:
                 k, v = baris.split("=", 1)
                 os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
-
-
-def akun_jadwal() -> str:
-    """Akun yang dipakai posting terjadwal: THREADS_AKUN_JADWAL, default `utama`."""
-    muat_env()
-    nilai = os.environ.get("THREADS_AKUN_JADWAL", "").strip()
-    if not nilai:
-        return AKUN_UTAMA
-    try:
-        return akun_type(nilai)
-    except argparse.ArgumentTypeError as e:
-        sys.exit(f"THREADS_AKUN_JADWAL tidak sah: {e}")
 
 
 def jam_slot(slot: str, s: dict = None) -> str:
@@ -183,11 +187,11 @@ def cmd_simpan(a):
     if err:
         sys.exit("GAGAL VALIDASI:\n- " + "\n- ".join(err))
     if a.slot in SLOT:
-        jadwal = akun_jadwal()
-        if a.akun and a.akun != jadwal:
-            sys.exit(f"Slot {a.slot} terjadwal selalu untuk akun jadwal ({jadwal}, THREADS_AKUN_JADWAL); "
-                     "akun lain lewat slot manual (slot-baru).")
-        a.akun = jadwal
+        pemilik_slot = AKUN_SLOT[a.slot]
+        if a.akun and a.akun != pemilik_slot:
+            sys.exit(f"Slot {a.slot} terjadwal untuk akun {pemilik_slot}; "
+                     f"slot akun {a.akun}: {', '.join(JADWAL.get(a.akun, {})) or 'tidak ada'} (atau slot manual).")
+        a.akun = pemilik_slot
     else:
         a.akun = a.akun or AKUN_UTAMA
     d = muat(a.tanggal)
@@ -252,11 +256,9 @@ def cmd_status(a):
         s = d["slot"].get(sl)
         jam = jam_slot(sl, s)
         if not s:
-            print(f"- {sl} ({jam}): belum ada usulan")
+            print(f"- {sl} ({jam}): [{AKUN_SLOT[sl]}] belum ada usulan")
             continue
-        info = s["status"]
-        if akun_slot(s) != AKUN_UTAMA:
-            info = f"[{akun_slot(s)}] " + info
+        info = f"[{akun_slot(s)}] " + s["status"]
         if s.get("disetujui"):
             info += f" (opsi {s['disetujui']}: {s['opsi'][s['disetujui'] - 1].get('topik', '')})"
         if s.get("tautan"):
@@ -294,6 +296,13 @@ def cmd_slot_baru(a):
     print(f"manual{n}")
 
 
+def cmd_jadwal(a):
+    for akun, slot in JADWAL.items():
+        jam = ", ".join(f"{s} {j}" + (" (utas panjang)" if s in SLOT_PANJANG else "") for s, j in slot.items())
+        gel = ", ".join(f"{g}: {'+'.join(sl)}" for g, sl in GELOMBANG.items() if sl[0] in slot)
+        print(f"{akun}: tema {TEMA[akun]}\n  posting {jam}\n  gelombang {gel}")
+
+
 def tandai_terposting(tanggal, slot, tautan, ids):
     d = muat(tanggal)
     s = d["slot"][slot]
@@ -316,11 +325,12 @@ def main():
             p.add_argument("--jadwal", default="", help="Teks jadwal posting, mis. 'sekarang' atau '2026-11-20 15:30 WIB'")
         if nama == "simpan":
             p.add_argument("--akun", default=None, type=akun_type,
-                           help="Akun Threads tujuan (slot terjadwal: akun jadwal; manual: default utama)")
+                           help="Akun Threads tujuan (slot terjadwal: akun pemilik slot; manual: default utama)")
         p.add_argument("--tanggal", default=hari_ini())
         p.set_defaults(fn=fn)
     p = sub.add_parser("status"); p.add_argument("--tanggal", default=hari_ini()); p.set_defaults(fn=cmd_status)
     p = sub.add_parser("slot-baru"); p.add_argument("--tanggal", default=hari_ini()); p.set_defaults(fn=cmd_slot_baru)
+    p = sub.add_parser("jadwal"); p.set_defaults(fn=cmd_jadwal)
     p = sub.add_parser("riwayat"); p.add_argument("--hari", type=int, default=7); p.set_defaults(fn=cmd_riwayat)
     a = ap.parse_args()
     a.fn(a)

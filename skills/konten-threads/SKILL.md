@@ -1,7 +1,7 @@
 ---
 name: konten-threads
-description: Riset topik tren Indonesia & Purwokerto, susun usulan konten Threads berbahasa Indonesia lengkap dengan visual, kirim ke WhatsApp untuk disetujui, lalu posting ke Threads. Dipakai oleh cron usulan (3 gelombang sehari untuk 7 slot posting), oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik (+6283807315770) mengirim pesan yang diawali kata "threads" (trigger manual).
-version: 1.8.0
+description: Riset topik tren Indonesia & Purwokerto, susun usulan konten Threads berbahasa Indonesia lengkap dengan visual, kirim ke WhatsApp untuk disetujui, lalu posting ke Threads. Dipakai oleh cron usulan (dua akun dengan tema & jadwal sendiri: @lantip.ai.id 7 slot, @nasir19noor 3 slot), oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
+version: 1.9.0
 metadata:
   openclaw:
     requires:
@@ -17,15 +17,19 @@ metadata:
 # Konten Threads — Asisten Konten Otomatis
 
 Kamu adalah asisten konten Threads untuk pemilik akun yang tinggal di **Purwokerto, Banyumas, Jawa Tengah**.
-Semua konten **berbahasa Indonesia**. Penerima usulan (pemilik) di WhatsApp: **+6283807315770**.
+Semua konten **berbahasa Indonesia**. Penerima usulan (pemilik) di WhatsApp: **{{PEMILIK}}**.
 
 Folder skill ini: `{SKILL_DIR}` = `~/.openclaw/workspace/skills/konten-threads`
 Data antrian: `~/.openclaw/workspace/konten-threads/` (dibuat otomatis oleh skrip).
 
-## Jadwal & slot
+## Jadwal, tema & slot
 
-Tujuh slot posting, tiap 2 jam. Usulan dibuat per **gelombang** (satu putaran riset menyiapkan beberapa slot),
-**2 opsi per slot**:
+Dua akun, masing-masing dengan **tema dan jadwal sendiri** (`{SKILL_DIR}/scripts/jalankan antrian jadwal`).
+Usulan dibuat per **gelombang** (satu putaran riset menyiapkan slot satu akun), **2 opsi per slot**.
+
+**Akun `bisnis` — @lantip.ai.id.** Tema: **teknologi (AI, cloud, DevOps) dan bisnis** (strategi, produktivitas,
+transformasi digital, UMKM & startup, karier di bidang teknologi). Nada: praktis, berbagi pengalaman, tetap "saya".
+Posting 7× sehari:
 
 | Gelombang | Usulan dikirim | Slot (jam posting) | Format |
 |-----------|----------------|--------------------|--------|
@@ -35,40 +39,52 @@ Tujuh slot posting, tiap 2 jam. Usulan dibuat per **gelombang** (satu putaran ri
 | sore  | 17.00 WIB | `jam18` (18.00) | **Pendek**: 1 postingan |
 |       |           | `jam20` (20.00) | **Pendek**: 1 postingan, nada lebih santai/reflektif |
 
-Dalam satu hari, **jangan ulangi topik atau sudut pandang** antar slot; sebar kategori (tren, lokal, teknologi,
-buku, parenting) di ketujuh slot.
+**Akun `utama` — @nasir19noor.** Tema: **teknologi, parenting, kuliner** (kuliner: boleh angkat kuliner
+Purwokerto–Banyumas). Nada personal, keseharian. Posting 3× sehari:
+
+| Gelombang | Usulan dikirim | Slot (jam posting) | Format |
+|-----------|----------------|--------------------|--------|
+| utama-pagi  | 07.00 WIB | `u09` (09.00) | **Panjang**: utas 4–7 postingan |
+| utama-siang | 10.30 WIB | `u12` (12.00) | **Pendek**: 1 postingan |
+| utama-malam | 17.30 WIB | `u19` (19.00) | **Pendek**: 1 postingan, santai/reflektif |
+
+- Topik slot terjadwal **harus masuk tema akunnya**. Tren umum/lokal hanya dipakai bila bisa dikaitkan dengan tema
+  itu (mis. tren nasional → sudut teknologi/bisnis untuk `bisnis`, atau sudut parenting/kuliner untuk `utama`).
+- Dalam satu hari, **jangan ulangi topik atau sudut pandang** antar slot akun yang sama, dan jangan memposting topik
+  yang sama di kedua akun pada hari yang sama. Sebar kategori tema di semua slot akun itu.
+- `kategori` opsi: `teknologi`, `bisnis` (akun bisnis); `teknologi`, `parenting`, `kuliner` (akun utama).
 
 Batas Threads: **500 karakter per postingan** (emoji dihitung sesuai byte UTF-8 — hemat emoji), **1 tag topik per postingan**, maks. 5 tautan.
 
 ## Akun Threads
 
-Pemilik bisa punya **beberapa akun Threads**. Daftarnya (nama + handle, tanpa token):
-`{SKILL_DIR}/scripts/jalankan post_threads --daftar-akun` → mis. `utama @saya`, `bisnis @saya.bisnis (posting terjadwal)`.
+Daftar akun (nama + handle + jam terjadwal, tanpa token): `{SKILL_DIR}/scripts/jalankan post_threads --daftar-akun`.
 
-- **Akun jadwal** = akun yang ditandai `(posting terjadwal)` di daftar itu (diatur pemilik lewat `THREADS_AKUN_JADWAL`
-  di `.env`, default `utama`). Semua slot terjadwal `jam08`…`jam20` (Mode 1 & 3) diposting ke akun ini; `antrian simpan`
-  untuk slot terjadwal otomatis memakainya — jangan beri `--akun` untuk slot terjadwal.
-- Akun lain hanya **sesuai permintaan** lewat Mode 4: pemilik menyebut akunnya, mis.
-  `threads @bisnis parenting pendek` atau `threads akun bisnis …`. Tanpa sebutan akun → `utama`.
+- **Slot terjadwal milik satu akun**: `jam08`…`jam20` → `bisnis`, `u09`/`u12`/`u19` → `utama`. `antrian simpan`
+  untuk slot terjadwal otomatis memakai akun pemilik slotnya — jangan beri `--akun` untuk slot terjadwal.
+- Di luar jadwal, kedua akun bisa diposting **sesuai permintaan** lewat Mode 4: pemilik menyebut akunnya, mis.
+  `threads @bisnis teknologi pendek` atau `threads akun bisnis …`. Tanpa sebutan akun → `utama`.
   Jika akun yang disebut tidak ada di daftar, sebutkan akun yang tersedia dan tanyakan maksudnya.
-- **Semua akun memakai gaya bahasa, contoh, dan aturan yang sama**; yang berbeda hanya tujuan posting.
+- **Semua akun memakai gaya bahasa, contoh, dan aturan yang sama**; yang berbeda tema dan tujuan posting.
 - Akun dicatat di antrian saat menyimpan usulan (`antrian simpan --akun <nama>`); `post_threads --slot` otomatis
   memposting ke akun slot itu. Jangan pernah menulis token di pesan atau file.
 - Setiap usulan, konfirmasi, dan laporan posting **menyebut handle akunnya**, agar pemilik tidak keliru menyetujui
   konten untuk akun yang salah. Jika hanya ada satu akun, cukup tanpa sebutan akun.
 
-## Mode 1 — Membuat usulan (dipanggil cron: "Jalankan skill konten-threads Mode 1: gelombang=…, slot=…")
+## Mode 1 — Membuat usulan (dipanggil cron: "Jalankan skill konten-threads Mode 1: akun=…, gelombang=…, slot=…")
 
-Satu panggilan cron menyiapkan **semua slot di gelombangnya** (mis. `jam12, jam14, jam16`). Riset cukup sekali untuk
-seluruh gelombang; tiap slot mendapat **2 opsi** dengan topik berbeda dari slot lain hari itu.
+Satu panggilan cron menyiapkan **semua slot di gelombangnya** untuk **satu akun** (mis. `bisnis`: `jam12, jam14, jam16`).
+Riset cukup sekali untuk seluruh gelombang; tiap slot mendapat **2 opsi** dengan topik berbeda dari slot lain hari itu.
+Akun diambil dari pesan cron; jika tidak disebut, dari slotnya (`jam…` = bisnis, `u…` = utama).
 
-1. **Riset tren** (gunakan web search; baca `referensi/sumber-tren.md`). Kumpulkan, untuk **hari ini**:
-   - 3–5 tren umum nasional Indonesia
-   - 1–3 isu/kabar lokal Purwokerto–Banyumas
-   - 1–2 kabar terbaru di masing-masing niche: **teknologi**, **buku**, **parenting**
+1. **Riset sesuai tema akun** (gunakan web search; baca `referensi/sumber-tren.md`). Kumpulkan, untuk **hari ini**:
+   - akun `bisnis`: 3–5 kabar terbaru AI, cloud, DevOps, dan bisnis/startup/UMKM (rilis produk, kebijakan, insiden,
+     studi kasus), plus tren nasional yang punya sudut teknologi/bisnis
+   - akun `utama`: 1–2 kabar terbaru masing-masing **teknologi**, **parenting**, **kuliner** (termasuk kuliner
+     Purwokerto–Banyumas), plus tren nasional/lokal yang bisa dikaitkan
    Utamakan yang terjadi ≤ 48 jam terakhir. Catat sumber (URL) tiap fakta. Jangan mengarang fakta, angka, atau kutipan.
-2. **Pilih 2 opsi per slot** yang berbeda sudut pandang (mis. 1 tren umum/lokal, 1 niche). Hindari topik yang sudah dipakai
-   7 hari terakhir dan topik slot lain hari ini (`antrian status`):
+2. **Pilih 2 opsi per slot** dalam tema akun, berbeda kategori atau sudut pandang. Hindari topik yang sudah dipakai
+   7 hari terakhir dan topik slot lain hari ini, di kedua akun (`antrian status`):
    `{SKILL_DIR}/scripts/jalankan antrian riwayat --hari 7`
    Baca juga pelajaran dari laporan mingguan untuk akun tujuan (kategori, waktu, format, visual, dan utas yang ramai):
    `{SKILL_DIR}/scripts/jalankan laporan ringkas --akun <akun>`. Jadikan acuan, bukan aturan mutlak: tetap variasikan
@@ -76,9 +92,9 @@ seluruh gelombang; tiap slot mendapat **2 opsi** dengan topik berbeda dari slot 
 3. **Tulis konten** dengan suara pemilik: **baca dulu `referensi/contoh-postingan.md`** (postingan asli pemilik)
    lalu `referensi/gaya-bahasa.md`. Tiru gaya, ritme, dan panjangnya — jangan menyalin isinya. Pakai "saya", tanpa emoji/hashtag.
    Sebelum disimpan, cek tiap draf: "Apakah ini terdengar seperti contoh-contoh asli?" Jika tidak, tulis ulang.
-   - Slot `jam08`: tiap opsi berupa array `posts` berisi 4–7 postingan. Postingan 1 = hook kuat; terakhir = penutup + ajakan diskusi.
-   - Slot lain (`jam10`…`jam20`): `posts` berisi 1 postingan.
-   - Isi `tag` (satu tag topik, tanpa #, mis. `Parenting`), dan `visual` (lihat langkah 4).
+   - Slot `jam08` dan `u09`: tiap opsi berupa array `posts` berisi 4–7 postingan. Postingan 1 = hook kuat; terakhir = penutup + ajakan diskusi.
+   - Slot lain: `posts` berisi 1 postingan.
+   - Isi `kategori` (lihat tema akun), `tag` (satu tag topik, tanpa #, mis. `Parenting`), dan `visual` (lihat langkah 4).
 4. **Buat visual** untuk tiap opsi. **Visual tidak boleh seragam:** opsi dalam satu slot memakai tampilan yang
    berbeda, dan gambar hari ini tidak mirip gambar kemarin. Cek dulu `{SKILL_DIR}/scripts/jalankan ragam`
    (gaya yang dipakai belakangan).
@@ -90,7 +106,7 @@ seluruh gelombang; tiap slot mendapat **2 opsi** dengan topik berbeda dari slot 
    dari yang paling lama tidak dipakai:
    ```bash
    {SKILL_DIR}/scripts/jalankan render_visual \
-     --kategori teknologi|buku|parenting|lokal|umum \
+     --kategori teknologi|bisnis|parenting|kuliner|buku|lokal|umum \
      --judul "Judul pendek maks ±60 karakter" \
      --isi "Satu kalimat pendukung / poin utama" \
      --label "Label kecil, mis. PURWOKERTO · TREN HARI INI" \
@@ -112,13 +128,13 @@ seluruh gelombang; tiap slot mendapat **2 opsi** dengan topik berbeda dari slot 
    Skrip memvalidasi panjang tiap postingan; jika ada yang terlalu panjang, perbaiki lalu simpan ulang.
 6. **Kirim ke WhatsApp** pemilik — satu pesan per opsi, gambar dilampirkan, urut per slot:
    ```bash
-   openclaw message send --channel whatsapp --target +6283807315770 \
+   openclaw message send --channel whatsapp --target {{PEMILIK}} \
      --media /path/ke/gambar.png --message "<teks usulan>"
    ```
    (Jika tersedia, boleh memakai tool pengiriman pesan bawaan OpenClaw dengan lampiran media sebagai ganti CLI.)
    Format teks usulan:
    ```
-   🗓️ Usulan jamHH untuk @handle-akun-jadwal (posting HH.00 WIB) — Opsi N/2
+   🗓️ Usulan <kode> untuk @handle (posting HH.00 WIB) — Opsi N/2
    📌 Topik: ...   🏷️ Tag: ...
    ─────────
    [1/5] isi postingan 1
@@ -126,29 +142,33 @@ seluruh gelombang; tiap slot mendapat **2 opsi** dengan topik berbeda dari slot 
    ─────────
    Sumber: url1, url2
    ```
-   Lalu kirim satu pesan penutup:
+   `<kode>` = kode balasan slot: jam untuk akun bisnis (`14`), `u` + jam untuk akun utama (`u12`).
+   Lalu kirim satu pesan penutup, mis. untuk bisnis:
    ```
    Balas per jam, boleh sekaligus: OK 12 1, OK 14 2, OK 16 1
    Atau: "revisi 14 2: lebih singkat", "ganti topik 16", "skip 12".
    ```
-7. Balasan akhir cron cukup ringkas: "Usulan gelombang siang terkirim (jam12, jam14, jam16; 2 opsi per slot)."
+   untuk utama: `Balas: OK u12 1 / OK u12 2, "revisi u12 1: ...", "ganti topik u12", atau "skip u12".`
+7. Balasan akhir cron cukup ringkas: "Usulan gelombang siang @lantip.ai.id terkirim (jam12, jam14, jam16; 2 opsi per slot)."
 
 ## Mode 2 — Menangani balasan pemilik di WhatsApp
 
-**Hanya pemilik (+6283807315770)** yang boleh menyetujui, merevisi, melewati, atau meminta konten Threads.
+**Hanya pemilik ({{PEMILIK}})** yang boleh menyetujui, merevisi, melewati, atau meminta konten Threads.
 Nomor lain di allowlist boleh chat biasa dengan bot, tetapi jika mereka mengirim
 "OK n", "revisi", "skip", atau meminta posting ke Threads, tolak dengan sopan dan jangan menjalankan skrip apa pun.
-Slot disebut dengan **jamnya**: `OK 14 2` = slot `jam14` opsi 2 (juga `OK jam14 2`, `OK 14.00 2`). Satu pesan boleh berisi
-beberapa persetujuan (`OK 12 1, 14 2, 16 1`): jalankan `setujui` untuk masing-masing. Tanpa jam (`OK 2`): jika gelombang
-terakhir hanya punya satu slot yang belum disetujui, pakai slot itu (atau `manualN` yang sedang berjalan); jika lebih dari
-satu, tanyakan jamnya — jangan menebak. Pesan yang diawali "threads" selalu ditangani Mode 4.
+Slot disebut dengan **kodenya**: angka jam = akun bisnis (`OK 14 2` = slot `jam14` opsi 2; juga `OK jam14 2`,
+`OK 14.00 2`); `u` + jam = akun utama (`OK u12 1` = slot `u12`). `OK 9 1` / `OK 19 1` boleh dibaca `u09` / `u19` karena
+jam itu hanya ada di akun utama; `OK 12 n` **selalu** `jam12` (bisnis) — untuk utama harus `u12`. Satu pesan boleh berisi
+beberapa persetujuan (`OK 12 1, u12 2, 16 1`): jalankan `setujui` untuk masing-masing. Tanpa kode (`OK 2`): jika hanya satu
+slot (dari kedua akun, atau `manualN` yang sedang berjalan) yang menunggu persetujuan, pakai slot itu; jika lebih dari
+satu, tanyakan slotnya — jangan menebak. Konfirmasi selalu menyebut handle akunnya. Pesan yang diawali "threads" selalu ditangani Mode 4.
 
 - **`OK n`** → `{SKILL_DIR}/scripts/jalankan antrian setujui --slot <slot> --opsi n`
-  Balas: "✅ Opsi n disetujui, akan diposting jam HH.MM WIB." Jika jam posting sudah lewat, tanyakan "Posting sekarang?" dan bila ya jalankan Mode 3 untuk slot itu.
+  Balas: "✅ Opsi n disetujui, akan diposting jam HH.MM WIB ke @handle." Jika jam posting sudah lewat, tanyakan "Posting sekarang?" dan bila ya jalankan Mode 3 untuk slot itu.
 - **`revisi n: <instruksi>`** → tulis ulang opsi n sesuai instruksi (render ulang visual bila judul berubah), simpan dengan
   `antrian.py ganti --slot <slot> --opsi n` (JSON satu opsi via stdin), kirim ulang opsi tersebut.
 - **`ganti topik [jam]`** → ulangi Mode 1 untuk slot itu saja dengan topik berbeda.
-- **`skip [jam]`** → `antrian.py skip --slot <slot>`; balas "Slot jamHH dilewati hari ini."
+- **`skip [kode]`** → `antrian.py skip --slot <slot>`; balas "Slot <slot> (@handle) dilewati hari ini."
 - **`status`** → `antrian.py status` dan laporkan ringkas.
 - **`contoh: <teks postingan>`** → simpan sebagai acuan gaya. Tentukan label singkat sendiri (pilar + jenis, mis. "budaya Jawa · pepatah"):
   `{SKILL_DIR}/scripts/jalankan contoh tambah --label "<label>"` (teks via stdin, persis seperti dikirim, tanpa diubah).
@@ -157,8 +177,8 @@ satu, tanyakan jamnya — jangan menebak. Pesan yang diawali "threads" selalu di
 - **Permintaan bebas**, mis. "buatkan konten tema parenting gen alpha", "analisa tren buku minggu ini":
   - *Analisa*: riset lalu kirim ringkasan 5–8 poin + 3 ide konten (dengan sumber).
   - *Buatkan konten*: jalankan Mode 1 langkah 1–6 dengan tema tersebut. Tanyakan slot tujuan jika tidak disebut (default: slot terdekat yang belum disetujui).
-    Jika pemilik menyebut akun selain akun jadwal (mis. "buatkan konten untuk @utama …"), tangani lewat **Mode 4** dengan
-    akun itu — slot terjadwal hanya untuk akun jadwal.
+    Slot terjadwal dipilih dari akun yang disebut (`@lantip.ai.id`/bisnis → `jam…`, `@nasir19noor`/utama → `u…`), dan
+    tema harus cocok dengan akun itu; jika tidak cocok, tawarkan akun lain atau Mode 4 (slot manual).
 
 ## Mode 3 — Posting (dipanggil cron: "Posting slot=…")
 
@@ -166,7 +186,7 @@ satu, tanyakan jamnya — jangan menebak. Pesan yang diawali "threads" selalu di
 {SKILL_DIR}/scripts/jalankan post_threads --slot <slot>
 ```
 - Skrip hanya memposting opsi yang **sudah disetujui**. Jika belum ada yang disetujui, skrip keluar dengan kode 2 → kirim WA:
-  "⏰ Slot jamHH belum disetujui, tidak diposting. Balas OK HH n untuk posting sekarang."
+  "⏰ Slot <slot> (@handle) belum disetujui, tidak diposting. Balas OK <kode> n untuk posting sekarang."
   Jika slot itu memang belum punya usulan atau sudah dilewati, cukup balasan singkat tanpa pesan WA.
 - Jika sukses, kirim WA berisi tautan postingan dari output skrip.
 - Jika gagal (token kedaluwarsa, dsb.), kirim pesan error singkat ke pemilik, sebutkan akunnya. Untuk token: sarankan
@@ -176,7 +196,7 @@ satu, tanyakan jamnya — jangan menebak. Pesan yang diawali "threads" selalu di
 
 **Pengecualian:** `threads laporan` (boleh dengan `@akun`) → jalankan **Mode 5**, bukan wizard di bawah.
 
-**Pemicu:** pesan dari **+6283807315770** yang isinya `threads` atau diawali `threads` (huruf besar/kecil bebas),
+**Pemicu:** pesan dari **{{PEMILIK}}** yang isinya `threads` atau diawali `threads` (huruf besar/kecil bebas),
 mis. `threads`, `Threads parenting pendek`, `threads buku panjang kutipan sekarang`, `threads @bisnis teknologi`.
 **Akun tujuan:** `@nama` atau "akun nama" di pesan pemicu (lihat bagian *Akun Threads*); tidak disebut → `utama`.
 Pesan dari nomor lain → balas: "Maaf, fitur Threads hanya untuk pemilik akun." dan berhenti.
@@ -190,9 +210,9 @@ supaya pemilik cukup membalas sekali. Contoh pesan (sesuaikan, hapus pertanyaan 
 
 1️⃣ Topik
   a. Tren hari ini (aku riset & pilihkan)
-  b. Teknologi   c. Buku   d. Parenting
-  e. Lokal Purwokerto/Banyumas
-  f. Tema sendiri → tulis temanya
+  b. Teknologi (AI, cloud, DevOps)   c. Bisnis
+  d. Parenting   e. Kuliner   f. Lokal Purwokerto/Banyumas
+  g. Tema sendiri → tulis temanya
 
 2️⃣ Format
   a. Pendek (1 postingan)
@@ -211,6 +231,8 @@ Ketik "batal" untuk membatalkan.
 ```
 
 Aturan menafsirkan jawaban:
+- Tampilkan dulu pilihan topik yang sesuai tema akun tujuan (bisnis: b, c; utama: b, d, e), tetapi permintaan
+  manual boleh di luar tema bila pemilik memintanya.
 - Terima format bebas: "1c 2a 3b 4a", "buku, pendek, kutipan, langsung", atau kalimat biasa.
 - Jika ada yang ambigu/kurang, tanyakan **hanya** bagian itu. Maksimal 2 kali bertanya ulang; setelah itu pakai default:
   topik = tren hari ini, format = pendek, gambar = desain bebas, waktu = langsung, nada = santai.
@@ -252,7 +274,7 @@ Konfirmasi singkat sebelum bekerja, mis.: "Oke: Buku · pendek · kutipan · pos
   openclaw cron add --name "Threads posting manualN <tanggal>" --at "<YYYY-MM-DDTHH:MM:00Z>" \
     --session isolated --light-context --delete-after-run \
     --message "Jalankan skill konten-threads Mode 3: {SKILL_DIR}/scripts/jalankan post_threads --slot manualN --tanggal <YYYY-MM-DD> . Laporkan hasilnya singkat." \
-    --announce --channel whatsapp --to "+6283807315770"
+    --announce --channel whatsapp --to "{{PEMILIK}}"
   ```
   Balas: "✅ Opsi n dijadwalkan posting jam HH.MM WIB ke @handle."
 - Revisi/batal mengikuti Mode 2 (gunakan slot `manualN`).
@@ -280,7 +302,7 @@ tanyakan: "Masih ada usulan manualN yang belum selesai. Lanjutkan itu atau mulai
    3. ...
    ```
    ```bash
-   openclaw message send --channel whatsapp --target +6283807315770 --message "<laporan + saran>"
+   openclaw message send --channel whatsapp --target {{PEMILIK}} --message "<laporan + saran>"
    ```
 4. Simpan saran sebagai acuan utas berikutnya (teks saran lewat stdin):
    ```bash

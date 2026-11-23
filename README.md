@@ -3,13 +3,16 @@
 Alur:
 
 ```
-06.30 / 11.00 / 17.00 WIB  cron "usulan" (3 gelombang) → riset tren (nasional, Purwokerto, teknologi, buku, parenting)
-                                           → 2 opsi + visual per slot → WA pemilik
-                                              06.30: jam08 (utas panjang) + jam10
-                                              11.00: jam12 + jam14 + jam16
-                                              17.00: jam18 + jam20
-Anda balas "OK 12 1, OK 14 2" / "revisi 16 1: ..." / "skip 10" (dari nomor pemilik)
-08.00 10.00 12.00 14.00 16.00 18.00 20.00 WIB  cron "posting" → opsi yang disetujui diposting → tautan ke WA
+@lantip.ai.id (bisnis) — tema teknologi (AI, cloud, DevOps) & bisnis, 7 posting/hari
+  usulan 06.30: jam08 (utas panjang) + jam10 · 11.00: jam12 + jam14 + jam16 · 17.00: jam18 + jam20
+  posting 08.00 10.00 12.00 14.00 16.00 18.00 20.00 WIB
+@nasir19noor (utama) — tema teknologi, parenting, kuliner, 3 posting/hari
+  usulan 07.00: u09 (utas panjang) · 10.30: u12 · 17.30: u19
+  posting 09.00 12.00 19.00 WIB
+
+cron "usulan" → riset sesuai tema akun → 2 opsi + visual per slot → WA pemilik
+Anda balas "OK 12 1, OK u12 2" / "revisi 16 1: ..." / "skip u19" (dari nomor pemilik)
+cron "posting" → opsi yang disetujui diposting ke akun slotnya → tautan ke WA
 Minggu 21.00 WIB           cron "laporan" → laporan mingguan per akun (engagement, reply, follower, saran) → WA
                                            → disimpan sebagai acuan usulan berikutnya
 Kapan saja: kirim "threads" dari nomor pemilik → bot bertanya topik, format, gambar, waktu → usulan → OK → posting
@@ -37,7 +40,7 @@ skills/konten-threads/
   scripts/post_threads.py   posting ke Threads API (utas berantai + gambar)
   scripts/laporan.py        laporan mingguan dari Threads Insights → SQLite + JSON/MD + pesan WA
 pasang.sh                   memasang skill + mengisi nomor pemilik dari ~/.openclaw/.env
-cron-setup.sh               mendaftarkan 11 cron job (3 usulan, 7 posting, 1 laporan)
+cron-setup.sh               mendaftarkan 17 cron job (bisnis 3+7, utama 3+3, 1 laporan); `utama` = 6 job utama saja
 .github/workflows/deploy.yml  deploy otomatis ke server OpenClaw (self-hosted runner)
 AGENTS-tambahan.md          aturan pemicu kata "threads" (tempel ke AGENTS.md)
 env.example                 variabel yang perlu diisi
@@ -126,7 +129,7 @@ Balas "OK 12 1" dari nomor pemilik, lalu uji posting tanpa benar-benar mempostin
 
 ### Trigger manual
 Kirim **`threads`** ke nomor bot. Bot akan bertanya dalam satu pesan:
-1. Topik: tren hari ini, teknologi, buku, parenting, lokal Purwokerto, atau tema sendiri
+1. Topik: tren hari ini, teknologi, bisnis, parenting, kuliner, lokal Purwokerto, atau tema sendiri
 2. Format: pendek atau panjang (utas)
 3. Gambar: kartu judul, daftar poin, kutipan besar, foto sendiri, tanpa gambar, atau **desain bebas** (Claude mendesain HTML/SVG khusus)
 4. Waktu posting: langsung setelah OK, atau jam tertentu
@@ -139,22 +142,40 @@ Bot lalu mengirim 2 opsi. Balas `OK 1` untuk menyetujui, dan konten akan diposti
 
 | Ketik | Hasil |
 |---|---|
-| `OK 14 2` | setujui opsi 2 slot 14.00 (`jam14`) |
-| `OK 12 1, 14 2, 16 1` | setujui beberapa slot sekaligus |
-| `OK 2` | hanya jika tinggal satu slot yang menunggu; selain itu bot menanyakan jamnya |
+| `OK 14 2` | setujui opsi 2 slot 14.00 @lantip.ai.id (`jam14`) |
+| `OK u12 1` | setujui opsi 1 slot 12.00 @nasir19noor (`u12`); `OK 12 …` selalu @lantip.ai.id |
+| `OK 12 1, u12 2, 16 1` | setujui beberapa slot sekaligus |
+| `OK 2` | hanya jika tinggal satu slot yang menunggu; selain itu bot menanyakan slotnya |
 | `revisi 14 2: lebih santai, tambah sudut Purwokerto` | opsi 2 slot 14.00 ditulis ulang |
 | `ganti topik 16` | 2 usulan baru untuk slot 16.00 |
-| `skip 10` | slot 10.00 dilewati hari ini |
-| `status` | ringkasan hari ini (slot akun lain ditandai `[bisnis]`) |
+| `skip 10` / `skip u19` | slot itu dilewati hari ini |
+| `status` | ringkasan hari ini, semua slot kedua akun (`[bisnis]` / `[utama]`) |
 | `contoh: <teks postingan Anda>` | disimpan sebagai acuan gaya bahasa |
 | `daftar contoh` / `hapus contoh 3` | kelola contoh gaya |
 | `buatkan konten tema parenting gen alpha untuk jam 20` | usulan bertema |
 | `analisa tren teknologi minggu ini` | ringkasan + ide konten |
 | `threads laporan` / `threads laporan @bisnis` | laporan mingguan sekarang (semua akun / satu akun) |
 
+## Tema & jadwal per akun (sejak skill 1.9.0)
+
+| Akun | Tema | Posting otomatis | Usulan dikirim |
+|---|---|---|---|
+| @lantip.ai.id (`bisnis`) | teknologi (AI, cloud, DevOps) dan bisnis | 7×: 08.00 (utas panjang), 10.00, 12.00, 14.00, 16.00, 18.00, 20.00 | 06.30, 11.00, 17.00 |
+| @nasir19noor (`utama`) | teknologi, parenting, kuliner | 3×: 09.00 (utas panjang), 12.00, 19.00 | 07.00, 10.30, 17.30 |
+
+Jadwal dan tema ada di `antrian.py` (`JADWAL`, `TEMA`; cek dengan `jalankan antrian jadwal`) dan harus sama dengan
+`cron-setup.sh`. Slot akun utama bernama `u09`, `u12`, `u19`, dan dibalas dengan kode itu (`OK u12 1`), karena jam
+12.00 dipakai kedua akun. `THREADS_AKUN_JADWAL` di `.env` tidak dipakai lagi (boleh dihapus).
+
+**Menambah jadwal akun utama ke server yang sudah berjalan.** Job akun bisnis yang ada tetap dipakai; cukup:
+```bash
+bash cron-setup.sh utama      # 3 job usulan + 3 job posting untuk @nasir19noor
+openclaw cron list            # total 17 job: bisnis 3+7, utama 3+3, laporan 1
+```
+
 ## Jadwal 7 slot (sejak skill 1.8.0)
 
-Posting tiap 2 jam, **08.00–20.00 WIB**, ke akun jadwal. Slot `jam08` berupa utas panjang (4–7 postingan), enam
+Akun bisnis (@lantip.ai.id) posting tiap 2 jam, **08.00–20.00 WIB**. Slot `jam08` berupa utas panjang (4–7 postingan), enam
 slot lain satu postingan pendek. Usulan dikirim dalam **3 gelombang** (06.30, 11.00, 17.00), **2 opsi per slot**,
 dengan topik yang tidak berulang dalam satu hari. Slot yang tidak disetujui sampai jamnya tidak diposting.
 Desain bebas dipakai untuk satu opsi per gelombang; sisanya template yang tampilannya otomatis berganti.
@@ -175,7 +196,7 @@ Setiap **Minggu 21.00 WIB** bot mengirim **satu pesan WA per akun** (@nasir19noo
 @lantip.ai.id = `bisnis`): jumlah utas, views, interaksi dan rasionya, **penambahan follower**, utas dengan
 interaksi / reply / views terbanyak dan yang paling sepi, pola per kategori, waktu, format, dan jenis visual,
 angka final minggu lalu, tautan 3 utas teratas, lalu 3 saran minggu depan dari Claude. Pola waktu dibandingkan
-per slot jam (08.00, 10.00, … 20.00), jadi terlihat jam mana yang paling ramai.
+per jam posting (dibulatkan ke jam terdekat), jadi terlihat slot mana yang paling ramai.
 
 - **Rentang:** Senin 00.00 WIB s.d. saat laporan dibuat; postingan yang dibuat manual di aplikasi Threads ikut dihitung.
   Interaksi = like + reply + repost + quote + share; metrik sebuah utas diambil dari postingan pertamanya.
@@ -219,16 +240,10 @@ Cron tidak perlu didaftarkan ulang saat deploy.
 
 ## Beberapa akun Threads
 
-Akun yang sekarang menjadi akun **`utama`**. Ketujuh slot terjadwal diposting ke **akun jadwal** — `utama`, kecuali
-diatur lain (lihat di bawah). Akun lain diposting sesuai permintaan, dengan gaya bahasa dan contoh yang sama;
-persetujuan tetap dari nomor pemilik.
-
-**Memindahkan posting terjadwal ke akun lain** (mis. `bisnis`): tambahkan ke `~/.openclaw/.env`
-```bash
-THREADS_AKUN_JADWAL=bisnis
-```
-lalu `openclaw gateway restart`. Cek dengan `jalankan post_threads --daftar-akun`: akun itu ditandai
-`(posting terjadwal)`. Cron tidak perlu diubah. Usulan yang sudah tersimpan sebelum pengaturan ini tetap ke akun lamanya.
+Akun **`utama`** = @nasir19noor, akun **`bisnis`** = @lantip.ai.id; keduanya punya jadwal dan tema sendiri (lihat
+*Tema & jadwal per akun*). Di luar jadwal, akun mana pun bisa diposting sesuai permintaan (`threads @bisnis …`), dengan
+gaya bahasa dan contoh yang sama; persetujuan tetap dari nomor pemilik. Cek dengan `jalankan post_threads --daftar-akun`:
+tiap akun ditandai jam terjadwalnya, dan ada peringatan bila akun berjadwal belum punya token.
 
 **Menambah akun** (mis. `bisnis`):
 1. Di aplikasi Meta yang sama, tambahkan akun Threads itu sebagai *Threads Tester* (langkah 3 di atas), terima

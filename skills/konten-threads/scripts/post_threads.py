@@ -9,8 +9,8 @@
 
 Beberapa akun: akun `utama` memakai THREADS_USER_ID / THREADS_ACCESS_TOKEN / THREADS_HANDLE;
 akun lain, mis. `bisnis`, memakai nama yang sama berakhiran _BISNIS. Slot di antrian mencatat
-akunnya, jadi --slot selalu memposting ke akun yang benar. Posting terjadwal memakai akun
-THREADS_AKUN_JADWAL (default utama).
+akunnya, jadi --slot selalu memposting ke akun yang benar. Slot terjadwal milik akun
+tertentu (antrian.JADWAL: jam08 … jam20 = bisnis, u09/u12/u19 = utama).
 
 Env: THREADS_USER_ID[_AKUN], THREADS_ACCESS_TOKEN[_AKUN], IMGBB_API_KEY (untuk hosting gambar)
 Kode keluar: 0 sukses, 2 belum disetujui/sudah diposting/dilewati, 1 error.
@@ -201,11 +201,12 @@ def main():
             akun = daftar_akun()
             if not akun:
                 print("Belum ada akun: isi THREADS_ACCESS_TOKEN di ~/.openclaw/.env")
-            jadwal = antrian.akun_jadwal()
             for nama in akun:
-                print(f"{nama}\t{handle(nama)}" + ("\t(posting terjadwal)" if nama == jadwal else ""))
-            if jadwal not in akun:
-                print(f"⚠️ THREADS_AKUN_JADWAL={jadwal}, tetapi akun itu belum punya token di .env")
+                jam = ", ".join(j for j in antrian.JADWAL.get(nama, {}).values())
+                print(f"{nama}\t{handle(nama)}" + (f"\t(terjadwal {jam})" if jam else ""))
+            for nama in antrian.JADWAL:
+                if nama not in akun:
+                    print(f"⚠️ Akun {nama} punya jadwal posting, tetapi belum punya token di .env")
         elif a.refresh_token:
             refresh()
         elif a.cek:

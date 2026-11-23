@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
-# Mendaftarkan 11 cron job konten Threads di OpenClaw (zona waktu WIB):
-# 3 gelombang usulan, 7 slot posting (08.00–20.00 tiap 2 jam), 1 laporan mingguan.
-# Sudah pernah dijalankan? Jangan ulangi (job akan dobel); tambahkan job baru saja — lihat README.
-# Jalankan sekali: bash cron-setup.sh
+# Mendaftarkan cron job konten Threads di OpenClaw (zona waktu WIB):
+#   akun bisnis (@lantip.ai.id): 3 gelombang usulan + 7 posting (08.00–20.00 tiap 2 jam)
+#   akun utama (@nasir19noor):   3 usulan + 3 posting (09.00, 12.00, 19.00)
+#   1 laporan mingguan
+# Jalankan sekali: bash cron-setup.sh          (semua, 17 job)
+#                  bash cron-setup.sh utama    (hanya 6 job akun utama)
+# Sudah pernah dijalankan? Jangan ulangi (job akan dobel) — lihat README.
 set -euo pipefail
+BAGIAN="${1:-semua}"
+if [[ "$BAGIAN" != semua && "$BAGIAN" != utama ]]; then
+  echo "Pemakaian: bash cron-setup.sh [utama]" >&2
+  exit 1
+fi
 
 # Nomor penerima usulan & pemberi persetujuan: THREADS_PEMILIK di ~/.openclaw/.env
 # (tidak ditulis di repo).
@@ -17,21 +25,23 @@ TZ_ID="Asia/Jakarta"
 
 openclaw config set cron.enabled true
 
+if [[ "$BAGIAN" == semua ]]; then
+# ==== Akun bisnis (@lantip.ai.id): teknologi (AI, cloud, DevOps) & bisnis, 7x sehari ====
 # ---- Usulan konten per gelombang (riset + draf + visual -> WA), 2 opsi per slot ----
 # Harus sama dengan antrian.GELOMBANG.
 openclaw cron add --name "Threads usulan pagi" --cron "30 6 * * *" --tz "$TZ_ID" \
   --session isolated \
-  --message "Jalankan skill konten-threads Mode 1: gelombang=pagi, slot=jam08 (utas panjang, posting 08.00 WIB), jam10 (pendek, 10.00 WIB). Kirim 2 opsi per slot ke $PEMILIK." \
+  --message "Jalankan skill konten-threads Mode 1: akun=bisnis, gelombang=pagi, slot=jam08 (utas panjang, posting 08.00 WIB), jam10 (pendek, 10.00 WIB). Kirim 2 opsi per slot ke $PEMILIK." \
   --announce --channel whatsapp --to "$PEMILIK"
 
 openclaw cron add --name "Threads usulan siang" --cron "0 11 * * *" --tz "$TZ_ID" \
   --session isolated \
-  --message "Jalankan skill konten-threads Mode 1: gelombang=siang, slot=jam12, jam14, jam16 (pendek; posting 12.00, 14.00, 16.00 WIB). Kirim 2 opsi per slot ke $PEMILIK." \
+  --message "Jalankan skill konten-threads Mode 1: akun=bisnis, gelombang=siang, slot=jam12, jam14, jam16 (pendek; posting 12.00, 14.00, 16.00 WIB). Kirim 2 opsi per slot ke $PEMILIK." \
   --announce --channel whatsapp --to "$PEMILIK"
 
 openclaw cron add --name "Threads usulan sore" --cron "0 17 * * *" --tz "$TZ_ID" \
   --session isolated \
-  --message "Jalankan skill konten-threads Mode 1: gelombang=sore, slot=jam18 (pendek, 18.00 WIB), jam20 (pendek reflektif, 20.00 WIB). Kirim 2 opsi per slot ke $PEMILIK." \
+  --message "Jalankan skill konten-threads Mode 1: akun=bisnis, gelombang=sore, slot=jam18 (pendek, 18.00 WIB), jam20 (pendek reflektif, 20.00 WIB). Kirim 2 opsi per slot ke $PEMILIK." \
   --announce --channel whatsapp --to "$PEMILIK"
 
 # ---- Posting ke Threads (hanya jika sudah disetujui), tiap 2 jam 08.00–20.00 ----
@@ -48,6 +58,32 @@ openclaw cron add --name "Threads laporan mingguan" --cron "0 21 * * 0" --tz "$T
   --session isolated \
   --message "Jalankan skill konten-threads Mode 5: laporan mingguan semua akun, satu pesan WA per akun ke $PEMILIK, lalu simpan sarannya." \
   --announce --channel whatsapp --to "$PEMILIK"
+fi
+
+# ==== Akun utama (@nasir19noor): teknologi, parenting, kuliner, 3x sehari ====
+# Satu slot per gelombang, jadi tiap putaran kerja pendek. Harus sama dengan antrian.GELOMBANG.
+openclaw cron add --name "Threads usulan utama pagi" --cron "0 7 * * *" --tz "$TZ_ID" \
+  --session isolated \
+  --message "Jalankan skill konten-threads Mode 1: akun=utama, gelombang=utama-pagi, slot=u09 (utas panjang, posting 09.00 WIB). Kirim 2 opsi ke $PEMILIK." \
+  --announce --channel whatsapp --to "$PEMILIK"
+
+openclaw cron add --name "Threads usulan utama siang" --cron "30 10 * * *" --tz "$TZ_ID" \
+  --session isolated \
+  --message "Jalankan skill konten-threads Mode 1: akun=utama, gelombang=utama-siang, slot=u12 (pendek, posting 12.00 WIB). Kirim 2 opsi ke $PEMILIK." \
+  --announce --channel whatsapp --to "$PEMILIK"
+
+openclaw cron add --name "Threads usulan utama malam" --cron "30 17 * * *" --tz "$TZ_ID" \
+  --session isolated \
+  --message "Jalankan skill konten-threads Mode 1: akun=utama, gelombang=utama-malam, slot=u19 (pendek, posting 19.00 WIB). Kirim 2 opsi ke $PEMILIK." \
+  --announce --channel whatsapp --to "$PEMILIK"
+
+for JAM in 09 12 19; do
+  SLOT="u$JAM"
+  openclaw cron add --name "Threads posting $SLOT" --cron "0 $((10#$JAM)) * * *" --tz "$TZ_ID" \
+    --session isolated --light-context \
+    --message "Jalankan skill konten-threads Mode 3: ~/.openclaw/workspace/skills/konten-threads/scripts/jalankan post_threads --slot $SLOT . Laporkan hasilnya singkat (tautan postingan, atau alasan tidak diposting)." \
+    --announce --channel whatsapp --to "$PEMILIK"
+done
 
 openclaw cron list
 echo "Selesai. Uji sekarang: openclaw cron run <id-job-usulan-siang>"

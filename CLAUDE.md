@@ -60,19 +60,25 @@ re-run after every update.
 ## How it works
 
 **Five modes** (SKILL.md):
-1. **Proposals** — three batches ("gelombang", `antrian.GELOMBANG`, must
-   match `cron-setup.sh`): 06.30 → `jam08`+`jam10`, 11.00 →
-   `jam12`+`jam14`+`jam16`, 17.00 → `jam18`+`jam20`. One research pass per
-   batch, **2 options per slot**, no repeated topic within a day; `jam08`
-   (`SLOT_PANJANG`) is a 4–7-post thread, the rest one post. One free design
-   per batch, the rest templates. `antrian simpan` per slot, each option
-   to WhatsApp.
+1. **Proposals** — per account, in batches ("gelombang",
+   `antrian.GELOMBANG`, must match `cron-setup.sh`). `bisnis`
+   (@lantip.ai.id, theme AI/cloud/DevOps + business): 06.30 →
+   `jam08`+`jam10`, 11.00 → `jam12`+`jam14`+`jam16`, 17.00 →
+   `jam18`+`jam20`. `utama` (@nasir19noor, theme tech/parenting/culinary):
+   07.00 → `u09`, 10.30 → `u12`, 17.30 → `u19`. Schedules and themes live
+   in `antrian.JADWAL` / `TEMA` (`antrian jadwal` prints them). One research
+   pass per batch, on the account's theme, **2 options per slot**, no
+   repeated topic within a day; `jam08`/`u09` (`SLOT_PANJANG`) are 4–7-post
+   threads, the rest one post. One free design per batch, the rest
+   templates. `antrian simpan` per slot, each option to WhatsApp.
 2. **Owner replies** — `OK n`, `revisi n: …`, `ganti topik`, `skip`,
    `status`, `contoh: …`, free requests ("buatkan konten …", "analisa …").
-3. **Posting** — cron every 2 h, 08.00–20.00 WIB (`jam08` … `jam20`):
-   `jalankan post_threads --slot <slot>`; posts only an approved option.
-   Owner approves by hour: `OK 14 2`, several per message; a bare `OK n`
-   only when exactly one slot is waiting, otherwise the agent asks.
+3. **Posting** — one cron per slot (bisnis every 2 h 08.00–20.00,
+   utama 09.00/12.00/19.00): `jalankan post_threads --slot <slot>`; posts
+   only an approved option. Owner approves by reply code: hour for bisnis
+   (`OK 14 2`), `u`+hour for utama (`OK u12 1`; 12.00 exists in both, so a
+   bare `12` is always bisnis), several per message; a bare `OK n` only
+   when exactly one slot is waiting, otherwise the agent asks.
 4. **Manual trigger** — a message starting with `threads` from the owner: a
    one-message wizard (topic, format, image, when), 2 options in slot
    `manualN`, posted immediately or by a one-shot cron (`--at`, UTC).
@@ -90,9 +96,9 @@ it): `laporan.db` with tables `postingan`, `metrik` (one row per post per
 fetch, latest wins), `follower` (snapshots), `laporan` (summary JSON +
 `saran`); plus `<akun>/<YYYY-Www>.json|.md` and a generated
 `pelajaran.md`. Week = Monday 00.00 WIB to now; last week is re-fetched
-for final numbers. The "Waktu" pattern buckets posts by nearest 2-hour
-slot (`waktu_bagian`), so the 7 slots compare directly. Follower growth = now minus the latest snapshot at
-least 6 days old, so the first report is only a baseline. Category /
+for final numbers. The "Waktu" pattern buckets posts by nearest hour
+(`waktu_bagian`); scheduled slots are on the hour, so slots compare directly. Follower growth
+= now minus the latest snapshot at least 6 days old, so the first report is only a baseline. Category /
 format / visual / slot come from the queue (`media_ids[0]` of posted
 slots); visual type is inferred (`desain/<stem>.html` = free design,
 `gambar/` = template). A thread's numbers are its first post's. Mode 1
@@ -135,11 +141,10 @@ Goal: no two consecutive visuals look alike — don't hard-code a single look.
 **Accounts**: several Threads accounts, one approver (the owner), one voice.
 `utama` uses `THREADS_USER_ID` / `THREADS_ACCESS_TOKEN` / `THREADS_HANDLE`;
 another account `x` uses the same names suffixed `_X`
-(`post_threads.nama_env`). The scheduled slots `jam08` … `jam20` go
-to the **scheduled account**, `THREADS_AKUN_JADWAL` in `.env` (default
-`utama`; `antrian.akun_jadwal`, which loads `.env` itself —
-`antrian.muat_env` is the one loader, `post_threads` reuses it).
-`antrian simpan` fills it in for scheduled slots and refuses any other;
+(`post_threads.nama_env`; `antrian.muat_env` is the one `.env` loader,
+`post_threads` reuses it). Each scheduled slot belongs to one account
+(`antrian.AKUN_SLOT`, built from `JADWAL`; the old `THREADS_AKUN_JADWAL`
+is ignored). `antrian simpan` fills it in for scheduled slots and refuses any other;
 manual slots default to `utama`, or `--akun` (`threads @bisnis …`). Each slot
 stores its `akun`, and `post_threads --slot` posts to that account, so a
 one-shot cron needs no account argument. `--daftar-akun` lists accounts

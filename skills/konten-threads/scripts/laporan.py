@@ -104,10 +104,9 @@ def cuplik(teks: str, maks: int = 60) -> str:
 
 
 def waktu_bagian(waktu_iso: str) -> str:
-    """Jam posting dibulatkan ke slot 2-jam terdekat (08.00 … 20.00), agar slot bisa dibandingkan."""
+    """Jam posting dibulatkan ke jam terdekat (slot terjadwal selalu tepat jam), agar slot bisa dibandingkan."""
     t = dt.datetime.fromisoformat(waktu_iso).astimezone(WIB)
-    jam = min(round((t.hour + t.minute / 60) / 2) * 2, 22)
-    return f"{jam:02d}.00"
+    return f"{(t.hour + (t.minute >= 30)) % 24:02d}.00"
 
 
 def interaksi(m: dict) -> int:
