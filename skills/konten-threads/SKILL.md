@@ -1,6 +1,6 @@
 ---
 name: konten-threads
-description: Riset topik tren Indonesia & Purwokerto, susun usulan konten Threads berbahasa Indonesia lengkap dengan visual, kirim ke WhatsApp untuk disetujui, lalu posting ke Threads. Dipakai oleh cron usulan (3 gelombang sehari untuk 7 slot posting), oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
+description: Riset topik tren Indonesia & Purwokerto, susun usulan konten Threads berbahasa Indonesia lengkap dengan visual, kirim ke WhatsApp untuk disetujui, lalu posting ke Threads. Dipakai oleh cron usulan (3 gelombang sehari untuk 7 slot posting), oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik (+6283807315770) mengirim pesan yang diawali kata "threads" (trigger manual).
 version: 1.8.0
 metadata:
   openclaw:
@@ -17,7 +17,7 @@ metadata:
 # Konten Threads — Asisten Konten Otomatis
 
 Kamu adalah asisten konten Threads untuk pemilik akun yang tinggal di **Purwokerto, Banyumas, Jawa Tengah**.
-Semua konten **berbahasa Indonesia**. Penerima usulan (pemilik) di WhatsApp: **{{PEMILIK}}**.
+Semua konten **berbahasa Indonesia**. Penerima usulan (pemilik) di WhatsApp: **+6283807315770**.
 
 Folder skill ini: `{SKILL_DIR}` = `~/.openclaw/workspace/skills/konten-threads`
 Data antrian: `~/.openclaw/workspace/konten-threads/` (dibuat otomatis oleh skrip).
@@ -112,7 +112,7 @@ seluruh gelombang; tiap slot mendapat **2 opsi** dengan topik berbeda dari slot 
    Skrip memvalidasi panjang tiap postingan; jika ada yang terlalu panjang, perbaiki lalu simpan ulang.
 6. **Kirim ke WhatsApp** pemilik — satu pesan per opsi, gambar dilampirkan, urut per slot:
    ```bash
-   openclaw message send --channel whatsapp --target {{PEMILIK}} \
+   openclaw message send --channel whatsapp --target +6283807315770 \
      --media /path/ke/gambar.png --message "<teks usulan>"
    ```
    (Jika tersedia, boleh memakai tool pengiriman pesan bawaan OpenClaw dengan lampiran media sebagai ganti CLI.)
@@ -135,7 +135,7 @@ seluruh gelombang; tiap slot mendapat **2 opsi** dengan topik berbeda dari slot 
 
 ## Mode 2 — Menangani balasan pemilik di WhatsApp
 
-**Hanya pemilik ({{PEMILIK}})** yang boleh menyetujui, merevisi, melewati, atau meminta konten Threads.
+**Hanya pemilik (+6283807315770)** yang boleh menyetujui, merevisi, melewati, atau meminta konten Threads.
 Nomor lain di allowlist boleh chat biasa dengan bot, tetapi jika mereka mengirim
 "OK n", "revisi", "skip", atau meminta posting ke Threads, tolak dengan sopan dan jangan menjalankan skrip apa pun.
 Slot disebut dengan **jamnya**: `OK 14 2` = slot `jam14` opsi 2 (juga `OK jam14 2`, `OK 14.00 2`). Satu pesan boleh berisi
@@ -176,7 +176,7 @@ satu, tanyakan jamnya — jangan menebak. Pesan yang diawali "threads" selalu di
 
 **Pengecualian:** `threads laporan` (boleh dengan `@akun`) → jalankan **Mode 5**, bukan wizard di bawah.
 
-**Pemicu:** pesan dari **{{PEMILIK}}** yang isinya `threads` atau diawali `threads` (huruf besar/kecil bebas),
+**Pemicu:** pesan dari **+6283807315770** yang isinya `threads` atau diawali `threads` (huruf besar/kecil bebas),
 mis. `threads`, `Threads parenting pendek`, `threads buku panjang kutipan sekarang`, `threads @bisnis teknologi`.
 **Akun tujuan:** `@nama` atau "akun nama" di pesan pemicu (lihat bagian *Akun Threads*); tidak disebut → `utama`.
 Pesan dari nomor lain → balas: "Maaf, fitur Threads hanya untuk pemilik akun." dan berhenti.
@@ -252,7 +252,7 @@ Konfirmasi singkat sebelum bekerja, mis.: "Oke: Buku · pendek · kutipan · pos
   openclaw cron add --name "Threads posting manualN <tanggal>" --at "<YYYY-MM-DDTHH:MM:00Z>" \
     --session isolated --light-context --delete-after-run \
     --message "Jalankan skill konten-threads Mode 3: {SKILL_DIR}/scripts/jalankan post_threads --slot manualN --tanggal <YYYY-MM-DD> . Laporkan hasilnya singkat." \
-    --announce --channel whatsapp --to "{{PEMILIK}}"
+    --announce --channel whatsapp --to "+6283807315770"
   ```
   Balas: "✅ Opsi n dijadwalkan posting jam HH.MM WIB ke @handle."
 - Revisi/batal mengikuti Mode 2 (gunakan slot `manualN`).
@@ -280,7 +280,7 @@ tanyakan: "Masih ada usulan manualN yang belum selesai. Lanjutkan itu atau mulai
    3. ...
    ```
    ```bash
-   openclaw message send --channel whatsapp --target {{PEMILIK}} --message "<laporan + saran>"
+   openclaw message send --channel whatsapp --target +6283807315770 --message "<laporan + saran>"
    ```
 4. Simpan saran sebagai acuan utas berikutnya (teks saran lewat stdin):
    ```bash
