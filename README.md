@@ -166,7 +166,9 @@ satu konten sesuai tema akun (riset, tulisan, gambar) dan menyimpannya sebagai s
 menghapusnya di aplikasi Threads bila perlu. Sebelum tayang Anda masih bisa `skip 14`, `revisi 14 1: …`,
 `ganti topik 14`, atau `status` (`u12` dst. untuk @nasir19noor). Karena tidak diperiksa dulu, konten otomatis
 menghindari topik sensitif (duka, politik, SARA, kesehatan berisiko, isu hukum, saran investasi) dan memilih topik
-evergreen bila kabar terbaru belum pasti.
+evergreen bila kabar terbaru belum pasti. Konten juga **tidak mengarang pengalaman pribadi** (mis. "sore ini saya
+beli mendoan…", "anak saya tadi…"); sudutnya fakta, tips, opini, atau pertanyaan ke pembaca. Cerita pribadi hanya
+dipakai bila Anda sendiri yang menceritakannya.
 
 Jadwal dan tema ada di `antrian.py` (`JADWAL`, `TEMA`, `OTOMATIS`, `jam_buat`; cek dengan `jalankan antrian jadwal`)
 dan harus sama dengan `cron-setup.sh`. Slot akun utama bernama `u09`, `u12`, `u19` (jam 12.00 dipakai kedua akun).

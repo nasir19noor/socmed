@@ -203,6 +203,9 @@ from the env (names and handles only); `--cek` / `--refresh-token` take
 - **Facts need sources**: every option carries `sumber` URLs; the agent
   must not invent facts, numbers or quotes. No SARA, partisan politics,
   hoaxes, other people's personal data, or real people's photos in visuals.
+- **No fictional anecdotes** (both accounts, since SKILL 1.13.0): never
+  invent first-person events ("tadi sore saya beli mendoan…", "anak saya
+  tadi…"). Opinions are fine; personal stories only if the owner told them.
 - **Voice**: the agent reads `contoh-postingan.md` (the owner's own posts)
   before `gaya-bahasa.md` and imitates style, never content. First person
   "saya", no emoji or hashtags in posts.

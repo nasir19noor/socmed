@@ -1,7 +1,7 @@
 ---
 name: konten-threads
 description: Riset topik tren sesuai tema akun, buat konten Threads berbahasa Indonesia lengkap dengan visual, lalu posting otomatis ke Threads. Dipakai oleh cron (dua akun dengan tema & jadwal sendiri, keduanya otomatis tanpa usulan: @lantip.ai.id 7 slot, @nasir19noor 3 slot), oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
-version: 1.12.0
+version: 1.13.0
 metadata:
   openclaw:
     requires:
@@ -29,7 +29,8 @@ Dua akun, masing-masing dengan **tema dan jadwal sendiri** (`{SKILL_DIR}/scripts
 untuk slot itu dan menyimpannya sudah disetujui; cron posting di jam slotnya memposting dan mengirim tautannya ke WA.
 
 **Akun `bisnis` — @lantip.ai.id.** Tema: **teknologi (AI, cloud, DevOps) dan bisnis** (strategi, produktivitas,
-transformasi digital, UMKM & startup, karier di bidang teknologi). Nada: praktis, berbagi pengalaman, tetap "saya".
+transformasi digital, UMKM & startup, karier di bidang teknologi). Nada: praktis, tetap "saya" — tanpa cerita
+pengalaman karangan (lihat *Aturan keamanan konten*).
 Posting 7× sehari:
 
 | Konten dibuat | Slot (jam posting) | Format |
@@ -39,7 +40,9 @@ Posting 7× sehari:
 | 19.30 WIB | `jam20` (20.00) | **Pendek**: 1 postingan, nada lebih santai/reflektif |
 
 **Akun `utama` — @nasir19noor.** Tema: **teknologi, parenting, kuliner** (kuliner: boleh angkat kuliner
-Purwokerto–Banyumas). Nada personal, keseharian. Posting 3× sehari:
+Purwokerto–Banyumas). Nada personal dan hangat, tetapi **bukan cerita keseharian karangan**: jangan menulis seolah
+pemilik baru saja membeli, makan, mengalami, atau berbicara dengan anak/orang lain bila itu tidak pernah ia ceritakan
+(lihat *Aturan keamanan konten*). Posting 3× sehari:
 
 | Konten dibuat | Slot (jam posting) | Format |
 |---------------|--------------------|--------|
@@ -325,8 +328,12 @@ Pemilik meminta semua slot terjadwal kedua akun diposting **tanpa usulan dan tan
    **jangan kirim apa pun ke WhatsApp**. Riset cukup secukupnya untuk satu konten. Cek topik hari ini di kedua akun (`antrian status`, `antrian riwayat --hari 7`) agar tidak berulang.
 2. Karena tidak ada yang memeriksa sebelum tayang, **lebih hati-hati dari biasanya**:
    - Hanya fakta yang sumbernya jelas dan sudah kamu baca; jika ragu, pilih topik evergreen dalam tema (bisnis: praktik
-     DevOps/cloud, pelajaran memakai AI, tips produktivitas/bisnis; utama: tips parenting, cerita kuliner/resep,
-     pengalaman memakai teknologi) daripada kabar yang belum pasti.
+     DevOps/cloud, pelajaran memakai AI, tips produktivitas/bisnis; utama: tips parenting, asal-usul/resep/fakta
+     kuliner, tips memakai teknologi) daripada kabar yang belum pasti.
+   - **Tanpa cerita fiktif.** Jangan mengarang kejadian orang pertama ("Sore ini saya beli mendoan dekat kantor…",
+     "Anak saya tadi bertanya…", "Kemarin klien saya…"). Pakai sudut yang jujur: fakta/sejarah, tips, opini, observasi
+     umum, atau pertanyaan ke pembaca ("Mendoan asli Banyumas digoreng setengah matang. Kalian tim mendoan lembek atau
+     kriuk?"). Cerita pribadi hanya boleh jika pemilik sendiri yang menceritakannya.
    - **Jangan** mengangkat duka/bencana, politik, SARA, kesehatan/obat yang berisiko, isu hukum, saran investasi/
      keuangan spesifik, atau menyebut orang/perusahaan tertentu secara negatif. Tanpa promosi/jualan.
    - Cek draf terhadap `referensi/contoh-postingan.md` dan batas karakter sebelum menyimpan.
@@ -349,5 +356,8 @@ tetap otomatis), `ganti topik 14`, atau `status`.
 - Tidak memposting apa pun tanpa persetujuan eksplisit pemilik — kecuali slot terjadwal kedua akun (Mode 6), yang
   sudah disetujui pemilik secara umum; aturan konten di bawah tetap berlaku penuh.
 - Fakta harus bersumber; jika ragu, tulis sebagai opini atau tanyakan.
+- **Jangan mengarang pengalaman pribadi** pemilik (kedua akun): tidak ada "tadi saya…", "anak saya…", "klien saya…",
+  tempat, pembelian, atau percakapan yang tidak pernah ia ceritakan. Opini dan sikap ("menurut saya…") boleh;
+  kejadian karangan tidak.
 - Hindari SARA, politik partisan, hoaks, data pribadi orang lain, dan foto orang sungguhan di visual.
 - Isu duka/bencana: nada empatik, tanpa jualan, tanpa candaan.
