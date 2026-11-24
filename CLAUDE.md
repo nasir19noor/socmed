@@ -59,13 +59,13 @@ re-run after every update.
 
 ## How it works
 
-**Five modes** (SKILL.md):
+**Six modes** (SKILL.md):
 1. **Proposals** — per account, in batches ("gelombang",
    `antrian.GELOMBANG`, must match `cron-setup.sh`). `bisnis`
    (@lantip.ai.id, theme AI/cloud/DevOps + business): 06.30 →
    `jam08`+`jam10`, 11.00 → `jam12`+`jam14`+`jam16`, 17.00 →
-   `jam18`+`jam20`. `utama` (@nasir19noor, theme tech/parenting/culinary):
-   07.00 → `u09`, 10.30 → `u12`, 17.30 → `u19`. Schedules and themes live
+   `jam18`+`jam20`. `utama` (@nasir19noor, theme tech/parenting/culinary)
+   has **no proposals** — see mode 6. Schedules and themes live
    in `antrian.JADWAL` / `TEMA` (`antrian jadwal` prints them). One research
    pass per batch, on the account's theme, **2 options per slot**, no
    repeated topic within a day; `jam08`/`u09` (`SLOT_PANJANG`) are 4–7-post
@@ -75,10 +75,10 @@ re-run after every update.
    `status`, `contoh: …`, free requests ("buatkan konten …", "analisa …").
 3. **Posting** — one cron per slot (bisnis every 2 h 08.00–20.00,
    utama 09.00/12.00/19.00): `jalankan post_threads --slot <slot>`; posts
-   only an approved option. Owner approves by reply code: hour for bisnis
-   (`OK 14 2`), `u`+hour for utama (`OK u12 1`; 12.00 exists in both, so a
-   bare `12` is always bisnis), several per message; a bare `OK n` only
-   when exactly one slot is waiting, otherwise the agent asks.
+   only an approved option. Owner approves bisnis slots by hour
+   (`OK 14 2`), several per message; a bare `OK n` only when exactly one
+   slot is waiting, otherwise the agent asks. Utama slots are referred to
+   as `u09`/`u12`/`u19` (`skip u12`, `revisi u12 1: …`).
 4. **Manual trigger** — a message starting with `threads` from the owner: a
    one-message wizard (topic, format, image, when), 2 options in slot
    `manualN`, posted immediately or by a one-shot cron (`--at`, UTC).
@@ -86,6 +86,13 @@ re-run after every update.
    `jalankan laporan buat` prints one block per account; the agent adds 3
    suggestions, sends one WhatsApp message per account, and stores the
    suggestions with `laporan saran`.
+6. **Auto-post** (accounts in `antrian.OTOMATIS`, i.e. `utama`) — cron at
+   08.30 / 11.30 / 18.30 WIB: research, write **one** option, render a
+   visual, `antrian simpan` — which, for an auto slot, requires exactly one
+   option and stores it already `disetujui` (`otomatis: true`; `ganti`
+   keeps it approved). No WhatsApp proposal; the regular posting cron at
+   09.00 / 12.00 / 19.00 posts it and sends the link. Stricter content
+   rules apply (SKILL.md Mode 6), since nobody reviews before it goes live.
 
 **Reports** (`laporan.py`, stdlib only — `sqlite3`): Threads Insights
 (`/{user}/threads` since/until, `/{media}/insights` views/likes/replies/

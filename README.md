@@ -6,13 +6,14 @@ Alur:
 @lantip.ai.id (bisnis) — tema teknologi (AI, cloud, DevOps) & bisnis, 7 posting/hari
   usulan 06.30: jam08 (utas panjang) + jam10 · 11.00: jam12 + jam14 + jam16 · 17.00: jam18 + jam20
   posting 08.00 10.00 12.00 14.00 16.00 18.00 20.00 WIB
-@nasir19noor (utama) — tema teknologi, parenting, kuliner, 3 posting/hari
-  usulan 07.00: u09 (utas panjang) · 10.30: u12 · 17.30: u19
+@nasir19noor (utama) — tema teknologi, parenting, kuliner, 3 posting/hari, OTOMATIS tanpa usulan
+  konten dibuat 08.30: u09 (utas panjang) · 11.30: u12 · 18.30: u19 → langsung disetujui
   posting 09.00 12.00 19.00 WIB
 
-cron "usulan" → riset sesuai tema akun → 2 opsi + visual per slot → WA pemilik
-Anda balas "OK 12 1, OK u12 2" / "revisi 16 1: ..." / "skip u19" (dari nomor pemilik)
-cron "posting" → opsi yang disetujui diposting ke akun slotnya → tautan ke WA
+cron "usulan" (bisnis) → riset sesuai tema akun → 2 opsi + visual per slot → WA pemilik
+Anda balas "OK 12 1, OK 14 2" / "revisi 16 1: ..." / "skip 10" (dari nomor pemilik)
+cron "buat" (utama) → riset → 1 konten + visual → langsung disetujui (tanpa pesan WA)
+cron "posting" → konten yang disetujui diposting ke akun slotnya → tautan ke WA
 Minggu 21.00 WIB           cron "laporan" → laporan mingguan per akun (engagement, reply, follower, saran) → WA
                                            → disimpan sebagai acuan usulan berikutnya
 Kapan saja: kirim "threads" dari nomor pemilik → bot bertanya topik, format, gambar, waktu → usulan → OK → posting
@@ -40,7 +41,7 @@ skills/konten-threads/
   scripts/post_threads.py   posting ke Threads API (utas berantai + gambar)
   scripts/laporan.py        laporan mingguan dari Threads Insights → SQLite + JSON/MD + pesan WA
 pasang.sh                   memasang skill + mengisi nomor pemilik dari ~/.openclaw/.env
-cron-setup.sh               mendaftarkan 17 cron job (bisnis 3+7, utama 3+3, 1 laporan); `utama` = 6 job utama saja
+cron-setup.sh               mendaftarkan 17 cron job (bisnis 3+7, utama 3+3, 1 laporan); `utama` = 6 job utama, `utama-buat` = 3 job buat
 .github/workflows/deploy.yml  deploy otomatis ke server OpenClaw (self-hosted runner)
 AGENTS-tambahan.md          aturan pemicu kata "threads" (tempel ke AGENTS.md)
 env.example                 variabel yang perlu diisi
@@ -143,12 +144,12 @@ Bot lalu mengirim 2 opsi. Balas `OK 1` untuk menyetujui, dan konten akan diposti
 | Ketik | Hasil |
 |---|---|
 | `OK 14 2` | setujui opsi 2 slot 14.00 @lantip.ai.id (`jam14`) |
-| `OK u12 1` | setujui opsi 1 slot 12.00 @nasir19noor (`u12`); `OK 12 …` selalu @lantip.ai.id |
-| `OK 12 1, u12 2, 16 1` | setujui beberapa slot sekaligus |
+| `OK 12 1, 14 2, 16 1` | setujui beberapa slot sekaligus |
 | `OK 2` | hanya jika tinggal satu slot yang menunggu; selain itu bot menanyakan slotnya |
 | `revisi 14 2: lebih santai, tambah sudut Purwokerto` | opsi 2 slot 14.00 ditulis ulang |
 | `ganti topik 16` | 2 usulan baru untuk slot 16.00 |
-| `skip 10` / `skip u19` | slot itu dilewati hari ini |
+| `skip 10` / `skip u19` | slot itu dilewati hari ini (untuk @nasir19noor: sebelum jam posting) |
+| `revisi u12 1: lebih singkat` | tulis ulang konten otomatis @nasir19noor sebelum tayang (tetap otomatis) |
 | `status` | ringkasan hari ini, semua slot kedua akun (`[bisnis]` / `[utama]`) |
 | `contoh: <teks postingan Anda>` | disimpan sebagai acuan gaya bahasa |
 | `daftar contoh` / `hapus contoh 3` | kelola contoh gaya |
@@ -158,20 +159,28 @@ Bot lalu mengirim 2 opsi. Balas `OK 1` untuk menyetujui, dan konten akan diposti
 
 ## Tema & jadwal per akun (sejak skill 1.9.0)
 
-| Akun | Tema | Posting otomatis | Usulan dikirim |
+| Akun | Tema | Posting terjadwal | Cara |
 |---|---|---|---|
-| @lantip.ai.id (`bisnis`) | teknologi (AI, cloud, DevOps) dan bisnis | 7×: 08.00 (utas panjang), 10.00, 12.00, 14.00, 16.00, 18.00, 20.00 | 06.30, 11.00, 17.00 |
-| @nasir19noor (`utama`) | teknologi, parenting, kuliner | 3×: 09.00 (utas panjang), 12.00, 19.00 | 07.00, 10.30, 17.30 |
+| @lantip.ai.id (`bisnis`) | teknologi (AI, cloud, DevOps) dan bisnis | 7×: 08.00 (utas panjang), 10.00, 12.00, 14.00, 16.00, 18.00, 20.00 | usulan 06.30, 11.00, 17.00 → Anda setujui |
+| @nasir19noor (`utama`) | teknologi, parenting, kuliner | 3×: 09.00 (utas panjang), 12.00, 19.00 | **otomatis**: konten dibuat 08.30, 11.30, 18.30, langsung tayang |
 
-Jadwal dan tema ada di `antrian.py` (`JADWAL`, `TEMA`; cek dengan `jalankan antrian jadwal`) dan harus sama dengan
-`cron-setup.sh`. Slot akun utama bernama `u09`, `u12`, `u19`, dan dibalas dengan kode itu (`OK u12 1`), karena jam
-12.00 dipakai kedua akun. `THREADS_AKUN_JADWAL` di `.env` tidak dipakai lagi (boleh dihapus).
+Jadwal dan tema ada di `antrian.py` (`JADWAL`, `TEMA`, `OTOMATIS`; cek dengan `jalankan antrian jadwal`) dan harus
+sama dengan `cron-setup.sh`. Slot akun utama bernama `u09`, `u12`, `u19`. `THREADS_AKUN_JADWAL` di `.env` tidak
+dipakai lagi (boleh dihapus).
 
-**Menambah jadwal akun utama ke server yang sudah berjalan.** Job akun bisnis yang ada tetap dipakai; cukup:
-```bash
-bash cron-setup.sh utama      # 3 job usulan + 3 job posting untuk @nasir19noor
-openclaw cron list            # total 17 job: bisnis 3+7, utama 3+3, laporan 1
-```
+**@nasir19noor tanpa usulan (sejak skill 1.10.0).** 30 menit sebelum jam posting, bot membuat satu konten dan
+menyimpannya sebagai sudah disetujui, tanpa pesan WA. Di jam posting, konten tayang dan tautannya dikirim ke WA, jadi
+Anda bisa memeriksa dan menghapusnya di aplikasi Threads bila perlu. Sebelum tayang Anda masih bisa `skip u12`,
+`revisi u12 1: …`, atau `status`. Karena tidak diperiksa dulu, konten otomatis menghindari topik sensitif (duka,
+politik, SARA, kesehatan berisiko, isu hukum) dan memilih topik evergreen bila kabar terbaru belum pasti.
+
+**Pindah dari versi usulan (1.9.0) di server yang sudah berjalan:**
+1. `openclaw cron list` → hapus 3 job **Threads usulan utama pagi/siang/malam** (mis. `openclaw cron rm <id>`).
+   Job **Threads posting u09/u12/u19** tetap dipakai.
+2. `bash cron-setup.sh utama-buat` → mendaftarkan 3 job **Threads buat utama pagi/siang/malam**.
+3. `openclaw cron list` → total 17 job: bisnis 3+7, utama 3 buat + 3 posting, laporan 1.
+
+Server yang belum punya job akun utama sama sekali cukup `bash cron-setup.sh utama` (6 job).
 
 ## Jadwal 7 slot (sejak skill 1.8.0)
 

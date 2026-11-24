@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # Mendaftarkan cron job konten Threads di OpenClaw (zona waktu WIB):
 #   akun bisnis (@lantip.ai.id): 3 gelombang usulan + 7 posting (08.00–20.00 tiap 2 jam)
-#   akun utama (@nasir19noor):   3 usulan + 3 posting (09.00, 12.00, 19.00)
+#   akun utama (@nasir19noor):   3 buat-konten otomatis (tanpa usulan) + 3 posting (09.00, 12.00, 19.00)
 #   1 laporan mingguan
 # Jalankan sekali: bash cron-setup.sh          (semua, 17 job)
 #                  bash cron-setup.sh utama    (hanya 6 job akun utama)
+#                  bash cron-setup.sh utama-buat (hanya 3 job buat-konten akun utama)
 # Sudah pernah dijalankan? Jangan ulangi (job akan dobel) — lihat README.
 set -euo pipefail
 BAGIAN="${1:-semua}"
-if [[ "$BAGIAN" != semua && "$BAGIAN" != utama ]]; then
-  echo "Pemakaian: bash cron-setup.sh [utama]" >&2
+if [[ "$BAGIAN" != semua && "$BAGIAN" != utama && "$BAGIAN" != utama-buat ]]; then
+  echo "Pemakaian: bash cron-setup.sh [utama | utama-buat]" >&2
   exit 1
 fi
 
@@ -61,21 +62,24 @@ openclaw cron add --name "Threads laporan mingguan" --cron "0 21 * * 0" --tz "$T
 fi
 
 # ==== Akun utama (@nasir19noor): teknologi, parenting, kuliner, 3x sehari ====
-# Satu slot per gelombang, jadi tiap putaran kerja pendek. Harus sama dengan antrian.GELOMBANG.
-openclaw cron add --name "Threads usulan utama pagi" --cron "0 7 * * *" --tz "$TZ_ID" \
+# Tanpa usulan: 30 menit sebelum jam posting, konten dibuat & langsung disetujui (Mode 6);
+# job posting di jam slotnya memposting dan mengirim tautannya ke WA. Harus sama dengan antrian.GELOMBANG.
+openclaw cron add --name "Threads buat utama pagi" --cron "30 8 * * *" --tz "$TZ_ID" \
   --session isolated \
-  --message "Jalankan skill konten-threads Mode 1: akun=utama, gelombang=utama-pagi, slot=u09 (utas panjang, posting 09.00 WIB). Kirim 2 opsi ke $PEMILIK." \
+  --message "Jalankan skill konten-threads Mode 6: akun=utama, slot=u09 (utas panjang, posting 09.00 WIB). Tanpa usulan ke WA." \
   --announce --channel whatsapp --to "$PEMILIK"
 
-openclaw cron add --name "Threads usulan utama siang" --cron "30 10 * * *" --tz "$TZ_ID" \
+openclaw cron add --name "Threads buat utama siang" --cron "30 11 * * *" --tz "$TZ_ID" \
   --session isolated \
-  --message "Jalankan skill konten-threads Mode 1: akun=utama, gelombang=utama-siang, slot=u12 (pendek, posting 12.00 WIB). Kirim 2 opsi ke $PEMILIK." \
+  --message "Jalankan skill konten-threads Mode 6: akun=utama, slot=u12 (pendek, posting 12.00 WIB). Tanpa usulan ke WA." \
   --announce --channel whatsapp --to "$PEMILIK"
 
-openclaw cron add --name "Threads usulan utama malam" --cron "30 17 * * *" --tz "$TZ_ID" \
+openclaw cron add --name "Threads buat utama malam" --cron "30 18 * * *" --tz "$TZ_ID" \
   --session isolated \
-  --message "Jalankan skill konten-threads Mode 1: akun=utama, gelombang=utama-malam, slot=u19 (pendek, posting 19.00 WIB). Kirim 2 opsi ke $PEMILIK." \
+  --message "Jalankan skill konten-threads Mode 6: akun=utama, slot=u19 (pendek, posting 19.00 WIB). Tanpa usulan ke WA." \
   --announce --channel whatsapp --to "$PEMILIK"
+
+[[ "$BAGIAN" == utama-buat ]] && { openclaw cron list; exit 0; }
 
 for JAM in 09 12 19; do
   SLOT="u$JAM"

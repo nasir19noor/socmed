@@ -16,6 +16,7 @@ Slot terjadwal per akun (JADWAL), masing-masing dengan tema sendiri (TEMA):
   bisnis (@lantip.ai.id): jam08, jam10, … jam20 — tiap 2 jam 08.00–20.00 WIB
   utama  (@nasir19noor):  u09, u12, u19 — 09.00, 12.00, 19.00 WIB
 jam08 dan u09 = utas panjang, sisanya pendek. Slot manualN = trigger manual dari WhatsApp.
+Akun OTOMATIS (utama) tanpa usulan: simpan slotnya dengan tepat 1 opsi, langsung berstatus disetujui.
 Usulan dibuat per gelombang (GELOMBANG, harus sama dengan cron-setup.sh).
 Akun: tiap slot mencatat akun Threads tujuannya; post_threads.py memakai akun itu. Slot terjadwal
 selalu ke akun pemilik slotnya; slot manual: `--akun`, default `utama`.
@@ -51,6 +52,8 @@ SLOT = dict(sorted(((s, j) for slot in JADWAL.values() for s, j in slot.items())
 AKUN_SLOT = {s: a for a, slot in JADWAL.items() for s in slot}
 # Slot yang formatnya utas panjang (4–7 postingan); slot lain 1 postingan pendek.
 SLOT_PANJANG = {"jam08", "u09"}
+# Akun yang slot terjadwalnya diposting otomatis tanpa usulan/persetujuan (1 opsi, langsung disetujui).
+OTOMATIS = {"utama"}
 # Gelombang usulan: satu putaran riset/usulan menyiapkan beberapa slot satu akun (cron-setup.sh).
 GELOMBANG = {
     "pagi": ["jam08", "jam10"],
@@ -194,12 +197,24 @@ def cmd_simpan(a):
         a.akun = pemilik_slot
     else:
         a.akun = a.akun or AKUN_UTAMA
+    otomatis = slot_otomatis(a.slot)
+    if otomatis and len(opsi) != 1:
+        sys.exit(f"Slot {a.slot} otomatis (akun {a.akun}, tanpa usulan): simpan tepat 1 opsi, bukan {len(opsi)}.")
     d = muat(a.tanggal)
-    d["slot"][a.slot] = {"status": "menunggu", "disetujui": None, "opsi": opsi,
-                         "akun": a.akun, "jadwal": a.jadwal or None,
+    if d["slot"].get(a.slot, {}).get("status") == "terposting":
+        sys.exit(f"Slot {a.slot} sudah terposting hari ini.")
+    d["slot"][a.slot] = {"status": "disetujui" if otomatis else "menunggu", "disetujui": 1 if otomatis else None,
+                         "opsi": opsi, "akun": a.akun, "jadwal": a.jadwal or None, "otomatis": otomatis,
                          "dibuat": dt.datetime.now(WIB).isoformat(timespec="seconds")}
     tulis(d)
-    print(f"Tersimpan: {a.tanggal} slot {a.slot} (akun {a.akun}), {len(opsi)} opsi.")
+    if otomatis:
+        print(f"Tersimpan & disetujui otomatis: {a.tanggal} slot {a.slot} (akun {a.akun}), posting {jam_slot(a.slot)}.")
+    else:
+        print(f"Tersimpan: {a.tanggal} slot {a.slot} (akun {a.akun}), {len(opsi)} opsi.")
+
+
+def slot_otomatis(slot: str) -> bool:
+    return slot in SLOT and AKUN_SLOT[slot] in OTOMATIS
 
 
 def ambil_slot(d, slot):
@@ -219,6 +234,10 @@ def cmd_ganti(a):
     if not 1 <= a.opsi <= len(s["opsi"]):
         sys.exit(f"Opsi {a.opsi} tidak ada (1–{len(s['opsi'])}).")
     s["opsi"][a.opsi - 1] = o
+    if s.get("otomatis"):
+        tulis(d)  # slot otomatis tetap disetujui
+        print(f"Opsi {a.opsi} slot {a.slot} diperbarui, tetap diposting otomatis {jam_slot(a.slot)}.")
+        return
     if s.get("disetujui") == a.opsi and s["status"] == "disetujui":
         s["status"] = "menunggu"  # revisi membatalkan persetujuan lama
         s["disetujui"] = None
@@ -300,7 +319,8 @@ def cmd_jadwal(a):
     for akun, slot in JADWAL.items():
         jam = ", ".join(f"{s} {j}" + (" (utas panjang)" if s in SLOT_PANJANG else "") for s, j in slot.items())
         gel = ", ".join(f"{g}: {'+'.join(sl)}" for g, sl in GELOMBANG.items() if sl[0] in slot)
-        print(f"{akun}: tema {TEMA[akun]}\n  posting {jam}\n  gelombang {gel}")
+        cara = "otomatis tanpa usulan" if akun in OTOMATIS else "usulan + persetujuan"
+        print(f"{akun}: tema {TEMA[akun]} ({cara})\n  posting {jam}\n  gelombang {gel}")
 
 
 def tandai_terposting(tanggal, slot, tautan, ids):

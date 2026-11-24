@@ -1,7 +1,7 @@
 ---
 name: konten-threads
-description: Riset topik tren Indonesia & Purwokerto, susun usulan konten Threads berbahasa Indonesia lengkap dengan visual, kirim ke WhatsApp untuk disetujui, lalu posting ke Threads. Dipakai oleh cron usulan (dua akun dengan tema & jadwal sendiri: @lantip.ai.id 7 slot, @nasir19noor 3 slot), oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
-version: 1.9.0
+description: Riset topik tren Indonesia & Purwokerto, susun usulan konten Threads berbahasa Indonesia lengkap dengan visual, kirim ke WhatsApp untuk disetujui, lalu posting ke Threads. Dipakai oleh cron usulan (dua akun dengan tema & jadwal sendiri: @lantip.ai.id 7 slot dengan usulan, @nasir19noor 3 slot otomatis tanpa usulan), oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
+version: 1.10.0
 metadata:
   openclaw:
     requires:
@@ -40,13 +40,13 @@ Posting 7× sehari:
 |       |           | `jam20` (20.00) | **Pendek**: 1 postingan, nada lebih santai/reflektif |
 
 **Akun `utama` — @nasir19noor.** Tema: **teknologi, parenting, kuliner** (kuliner: boleh angkat kuliner
-Purwokerto–Banyumas). Nada personal, keseharian. Posting 3× sehari:
+Purwokerto–Banyumas). Nada personal, keseharian. Posting 3× sehari, **otomatis tanpa usulan** (Mode 6):
 
-| Gelombang | Usulan dikirim | Slot (jam posting) | Format |
-|-----------|----------------|--------------------|--------|
-| utama-pagi  | 07.00 WIB | `u09` (09.00) | **Panjang**: utas 4–7 postingan |
-| utama-siang | 10.30 WIB | `u12` (12.00) | **Pendek**: 1 postingan |
-| utama-malam | 17.30 WIB | `u19` (19.00) | **Pendek**: 1 postingan, santai/reflektif |
+| Konten dibuat | Slot (jam posting) | Format |
+|---------------|--------------------|--------|
+| 08.30 WIB | `u09` (09.00) | **Panjang**: utas 4–7 postingan |
+| 11.30 WIB | `u12` (12.00) | **Pendek**: 1 postingan |
+| 18.30 WIB | `u19` (19.00) | **Pendek**: 1 postingan, santai/reflektif |
 
 - Topik slot terjadwal **harus masuk tema akunnya**. Tren umum/lokal hanya dipakai bila bisa dikaitkan dengan tema
   itu (mis. tren nasional → sudut teknologi/bisnis untuk `bisnis`, atau sudut parenting/kuliner untuk `utama`).
@@ -72,6 +72,9 @@ Daftar akun (nama + handle + jam terjadwal, tanpa token): `{SKILL_DIR}/scripts/j
   konten untuk akun yang salah. Jika hanya ada satu akun, cukup tanpa sebutan akun.
 
 ## Mode 1 — Membuat usulan (dipanggil cron: "Jalankan skill konten-threads Mode 1: akun=…, gelombang=…, slot=…")
+
+Mode 1 untuk akun `bisnis`. Slot akun `utama` (`u09`, `u12`, `u19`) tidak memakai usulan — jalankan **Mode 6**,
+juga bila cron lama memanggil "Mode 1: akun=utama".
 
 Satu panggilan cron menyiapkan **semua slot di gelombangnya** untuk **satu akun** (mis. `bisnis`: `jam12, jam14, jam16`).
 Riset cukup sekali untuk seluruh gelombang; tiap slot mendapat **2 opsi** dengan topik berbeda dari slot lain hari itu.
@@ -142,13 +145,11 @@ Akun diambil dari pesan cron; jika tidak disebut, dari slotnya (`jam…` = bisni
    ─────────
    Sumber: url1, url2
    ```
-   `<kode>` = kode balasan slot: jam untuk akun bisnis (`14`), `u` + jam untuk akun utama (`u12`).
-   Lalu kirim satu pesan penutup, mis. untuk bisnis:
+   `<kode>` = jam slot (`14`). Lalu kirim satu pesan penutup:
    ```
    Balas per jam, boleh sekaligus: OK 12 1, OK 14 2, OK 16 1
    Atau: "revisi 14 2: lebih singkat", "ganti topik 16", "skip 12".
    ```
-   untuk utama: `Balas: OK u12 1 / OK u12 2, "revisi u12 1: ...", "ganti topik u12", atau "skip u12".`
 7. Balasan akhir cron cukup ringkas: "Usulan gelombang siang @lantip.ai.id terkirim (jam12, jam14, jam16; 2 opsi per slot)."
 
 ## Mode 2 — Menangani balasan pemilik di WhatsApp
@@ -156,12 +157,12 @@ Akun diambil dari pesan cron; jika tidak disebut, dari slotnya (`jam…` = bisni
 **Hanya pemilik ({{PEMILIK}})** yang boleh menyetujui, merevisi, melewati, atau meminta konten Threads.
 Nomor lain di allowlist boleh chat biasa dengan bot, tetapi jika mereka mengirim
 "OK n", "revisi", "skip", atau meminta posting ke Threads, tolak dengan sopan dan jangan menjalankan skrip apa pun.
-Slot disebut dengan **kodenya**: angka jam = akun bisnis (`OK 14 2` = slot `jam14` opsi 2; juga `OK jam14 2`,
-`OK 14.00 2`); `u` + jam = akun utama (`OK u12 1` = slot `u12`). `OK 9 1` / `OK 19 1` boleh dibaca `u09` / `u19` karena
-jam itu hanya ada di akun utama; `OK 12 n` **selalu** `jam12` (bisnis) — untuk utama harus `u12`. Satu pesan boleh berisi
-beberapa persetujuan (`OK 12 1, u12 2, 16 1`): jalankan `setujui` untuk masing-masing. Tanpa kode (`OK 2`): jika hanya satu
-slot (dari kedua akun, atau `manualN` yang sedang berjalan) yang menunggu persetujuan, pakai slot itu; jika lebih dari
-satu, tanyakan slotnya — jangan menebak. Konfirmasi selalu menyebut handle akunnya. Pesan yang diawali "threads" selalu ditangani Mode 4.
+Slot akun bisnis disebut dengan **jamnya**: `OK 14 2` = slot `jam14` opsi 2 (juga `OK jam14 2`, `OK 14.00 2`). Satu pesan
+boleh berisi beberapa persetujuan (`OK 12 1, 14 2, 16 1`): jalankan `setujui` untuk masing-masing. Slot akun utama
+(`u09`, `u12`, `u19`) otomatis (Mode 6) dan tidak perlu `OK`; pemilik hanya bisa `skip u12` atau `revisi u12 1: …`
+sebelum jam posting (`revisi` menyimpan dengan `antrian ganti`, slot tetap otomatis). Angka jam tanpa `u` selalu slot
+bisnis. Tanpa jam (`OK 2`): jika hanya satu slot (atau `manualN` yang sedang berjalan) yang menunggu persetujuan, pakai
+slot itu; jika lebih dari satu, tanyakan jamnya — jangan menebak. Konfirmasi selalu menyebut handle akunnya. Pesan yang diawali "threads" selalu ditangani Mode 4.
 
 - **`OK n`** → `{SKILL_DIR}/scripts/jalankan antrian setujui --slot <slot> --opsi n`
   Balas: "✅ Opsi n disetujui, akan diposting jam HH.MM WIB ke @handle." Jika jam posting sudah lewat, tanyakan "Posting sekarang?" dan bila ya jalankan Mode 3 untuk slot itu.
@@ -187,7 +188,10 @@ satu, tanyakan slotnya — jangan menebak. Konfirmasi selalu menyebut handle aku
 ```
 - Skrip hanya memposting opsi yang **sudah disetujui**. Jika belum ada yang disetujui, skrip keluar dengan kode 2 → kirim WA:
   "⏰ Slot <slot> (@handle) belum disetujui, tidak diposting. Balas OK <kode> n untuk posting sekarang."
-  Jika slot itu memang belum punya usulan atau sudah dilewati, cukup balasan singkat tanpa pesan WA.
+  Jika slot itu memang belum punya usulan atau sudah dilewati, cukup balasan singkat tanpa pesan WA — kecuali slot
+  otomatis (`u…`) yang belum punya konten: kirim WA "⚠️ Konten <slot> @handle gagal dibuat, tidak diposting."
+- Slot otomatis yang sukses: kirim WA "✅ Terposting otomatis @handle (<slot>): <tautan>", agar pemilik bisa memeriksa
+  dan menghapusnya di aplikasi Threads bila perlu.
 - Jika sukses, kirim WA berisi tautan postingan dari output skrip.
 - Jika gagal (token kedaluwarsa, dsb.), kirim pesan error singkat ke pemilik, sebutkan akunnya. Untuk token: sarankan
   `{SKILL_DIR}/scripts/jalankan post_threads --refresh-token --akun <nama>`.
@@ -316,9 +320,37 @@ tanyakan: "Masih ada usulan manualN yang belum selesai. Lanjutkan itu atau mulai
    `threads_manage_insights`), tanpa saran.
 6. Balasan akhir cron cukup ringkas: "Laporan mingguan terkirim (2 akun)."
 
+## Mode 6 — Posting otomatis tanpa usulan (akun `utama`; cron: "Mode 6: akun=utama, slot=…")
+
+Pemilik meminta slot `u09`, `u12`, `u19` diposting **tanpa usulan dan tanpa persetujuan**. Cron ini berjalan 30 menit
+sebelum jam posting; job posting di jam slotnya (Mode 3) yang memposting dan mengirim tautannya ke WA.
+
+1. Ikuti **Mode 1 langkah 1–4** untuk akun `utama`, tetapi buat **1 konten saja** (bukan 2 opsi) dan **jangan kirim
+   apa pun ke WhatsApp**. Cek topik hari ini di kedua akun (`antrian status`, `antrian riwayat --hari 7`) agar tidak berulang.
+2. Karena tidak ada yang memeriksa sebelum tayang, **lebih hati-hati dari biasanya**:
+   - Hanya fakta yang sumbernya jelas dan sudah kamu baca; jika ragu, pilih topik evergreen dalam tema (tips parenting,
+     cerita kuliner/resep, pengalaman memakai teknologi) daripada kabar yang belum pasti.
+   - **Jangan** mengangkat duka/bencana, politik, SARA, kesehatan/obat yang berisiko, isu hukum, atau menyebut orang
+     tertentu secara negatif. Tanpa promosi/jualan.
+   - Cek draf terhadap `referensi/contoh-postingan.md` dan batas karakter sebelum menyimpan.
+3. Visual: template cepat (`render_visual`) atau desain bebas, cukup satu gambar.
+4. Simpan — skrip langsung menandainya **disetujui** (slot otomatis hanya menerima tepat 1 opsi):
+   ```bash
+   {SKILL_DIR}/scripts/jalankan antrian simpan --slot <u09|u12|u19> <<'JSON'
+   {"opsi": [{"topik": "...", "kategori": "parenting", "tag": "Parenting", "posts": ["..."],
+              "gambar": "/path/absolut/ke.png", "sumber": ["https://..."]}]}
+   JSON
+   ```
+5. Balasan akhir cron cukup ringkas tanpa pesan WA terpisah: "Konten u12 @nasir19noor siap, tayang 12.00 WIB."
+   Jika gagal membuat konten yang aman, jangan simpan apa pun; balas "Konten u12 tidak dibuat: <alasan singkat>."
+
+Pemilik tetap bisa campur tangan sebelum jam posting: `skip u12` (lewati), `revisi u12 1: …` (tulis ulang, tetap
+otomatis), atau `status`.
+
 ## Aturan keamanan konten
 
-- Tidak memposting apa pun tanpa persetujuan eksplisit pemilik.
+- Tidak memposting apa pun tanpa persetujuan eksplisit pemilik — kecuali slot otomatis akun `utama` (Mode 6), yang
+  sudah disetujui pemilik secara umum; aturan konten di bawah tetap berlaku penuh.
 - Fakta harus bersumber; jika ragu, tulis sebagai opini atau tanyakan.
 - Hindari SARA, politik partisan, hoaks, data pribadi orang lain, dan foto orang sungguhan di visual.
 - Isu duka/bencana: nada empatik, tanpa jualan, tanpa candaan.
