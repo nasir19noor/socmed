@@ -6,7 +6,8 @@
 Desain harus satu file HTML mandiri (CSS & SVG di dalam file). Lihat referensi/desain-bebas.md.
 Skrip menolak desain yang memuat gambar/skrip dari luar (kecuali Google Fonts) dan memperingatkan
 jika isi halaman melebihi kanvas 1080x1350. --arah mencatat arah seni yang dipakai (ragam.py),
-agar desain berikutnya memilih arah lain.
+agar desain berikutnya memilih arah lain. --slot atau --akun wajib: desain harus memuat handle akun yang
+memposting (watermark) dan tidak boleh memuat handle akun lain.
 """
 import argparse
 import os
@@ -68,11 +69,21 @@ def main():
     ap.add_argument("--html", required=True, help="File HTML desain")
     ap.add_argument("--out", required=True, help="File PNG keluaran")
     ap.add_argument("--arah", default="", help="Arah seni desain ini, mis. 'koran' (lihat: jalankan ragam --saran)")
+    ap.add_argument("--akun", default="", help="Akun yang memposting (utama/bisnis) atau @handle")
+    ap.add_argument("--slot", default="", help="Slot tujuan; akun diambil dari pemilik slot")
     a = ap.parse_args()
+    antrian = ragam.antrian
+    handle = antrian.handle_watermark(a.akun, a.slot)
 
     src = Path(os.path.expanduser(a.html)).resolve()
     html = src.read_text(encoding="utf-8")
     masalah = periksa(html)
+    if handle.lower() not in html.lower():
+        masalah.append(f"watermark {handle} tidak ada di desain (tampilkan handle akun yang memposting)")
+    for akun in antrian.HANDLE_BAWAAN:
+        lain = antrian.handle_akun(akun)
+        if lain.lower() != handle.lower() and re.search(re.escape(lain) + r"(?![\w.])", html, re.I):
+            masalah.append(f"desain memuat handle akun lain ({lain}); posting ini untuk {handle}")
     if masalah:
         sys.exit("DESAIN DITOLAK:\n- " + "\n- ".join(masalah))
     # kunci ukuran kanvas
@@ -88,6 +99,7 @@ def main():
             sys.exit("Gagal render. Pasang playwright di venv: pip install playwright && python -m playwright install chromium")
     if a.arah:
         ragam.catat("arah", a.arah.strip().lower())
+    antrian.berkas_watermark(out).write_text(handle, encoding="utf-8")
     print(out)
 
 

@@ -8,6 +8,8 @@ Contoh:
       --label "Parenting · Tips" --out /tmp/contoh.png
 
 Tanda *...* pada judul akan diberi warna aksen.
+Watermark (handle di kaki gambar) wajib sesuai akun yang memposting: --slot jam14 (akun dari slot),
+atau --akun bisnis / --akun utama (slot manual), atau --akun @handle.
 Gaya: --poin "a|b|c" untuk daftar; --gaya kutipan untuk kutipan besar (--isi = sumber/penulis);
 --angka "73%" untuk angka besar di atas judul.
 
@@ -159,7 +161,7 @@ def bangun_html(a) -> str:
         "{{UKURAN_JUDUL}}": str(round(ukuran)),
         "{{KONTEN}}": konten,
         "{{GAYA}}": a.gaya,
-        "{{AKUN}}": html.escape(a.akun or os.environ.get("THREADS_HANDLE", "")),
+        "{{AKUN}}": html.escape(a.handle),
         "{{TANGGAL}}": tanggal_id(dt.date.today()),
     }
     for k, v in ganti.items():
@@ -219,13 +221,15 @@ def main():
     ap.add_argument("--font", choices=["auto", *FONT], default="auto")
     ap.add_argument("--palet", default="auto", help="auto atau nomor varian palet kategori (1-3)")
     ap.add_argument("--label", default="")
-    ap.add_argument("--akun", default="", help="Handle Threads di kaki gambar, mis. @namaakun")
+    ap.add_argument("--akun", default="", help="Akun yang memposting (utama/bisnis) atau @handle, untuk watermark")
+    ap.add_argument("--slot", default="", help="Slot tujuan; watermark memakai akun pemilik slot (jam… = bisnis, u… = utama)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     if a.palet != "auto":
         if not a.palet.isdigit():
             ap.error("--palet harus auto atau angka")
         a.palet = int(a.palet)
+    a.handle = ragam.antrian.handle_watermark(a.akun, a.slot)
     pilih_gaya(a)
 
     out = Path(os.path.expanduser(a.out)).resolve()
@@ -235,7 +239,9 @@ def main():
         hp.write_text(bangun_html(a), encoding="utf-8")
         if not (render_playwright(hp, out) or render_chrome(hp, out)):
             sys.exit("Gagal render. Pasang: pip install playwright && python3 -m playwright install chromium")
+    ragam.antrian.berkas_watermark(out).write_text(a.handle, encoding="utf-8")
     print(out)
+    print(f"watermark: {a.handle}", file=sys.stderr)
     print(f"gaya: tata letak {a.tata_letak}, font {a.font}, palet {a.kategori}-{a.palet}", file=sys.stderr)
 
 

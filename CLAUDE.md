@@ -60,25 +60,22 @@ re-run after every update.
 ## How it works
 
 **Six modes** (SKILL.md):
-1. **Proposals** — per account, in batches ("gelombang",
-   `antrian.GELOMBANG`, must match `cron-setup.sh`). `bisnis`
-   (@lantip.ai.id, theme AI/cloud/DevOps + business): 06.30 →
-   `jam08`+`jam10`, 11.00 → `jam12`+`jam14`+`jam16`, 17.00 →
-   `jam18`+`jam20`. `utama` (@nasir19noor, theme tech/parenting/culinary)
-   has **no proposals** — see mode 6. Schedules and themes live
-   in `antrian.JADWAL` / `TEMA` (`antrian jadwal` prints them). One research
-   pass per batch, on the account's theme, **2 options per slot**, no
-   repeated topic within a day; `jam08`/`u09` (`SLOT_PANJANG`) are 4–7-post
-   threads, the rest one post. One free design per batch, the rest
-   templates. `antrian simpan` per slot, each option to WhatsApp.
+1. **Proposals** — only for owner requests ("buatkan konten …") and manual
+   slots: research on the account's theme, 2 options, visuals, `antrian
+   simpan`, each option to WhatsApp, wait for `OK`. Scheduled slots of both
+   accounts have **no proposals** — see mode 6. `bisnis` (@lantip.ai.id,
+   AI/cloud/DevOps + business) posts `jam08` … `jam20` every 2 h; `utama`
+   (@nasir19noor, tech/parenting/culinary) posts `u09`/`u12`/`u19`.
+   Schedules and themes live in `antrian.JADWAL` / `TEMA` (`antrian jadwal`
+   prints them); `jam08`/`u09` (`SLOT_PANJANG`) are 4–7-post threads, the
+   rest one post.
 2. **Owner replies** — `OK n`, `revisi n: …`, `ganti topik`, `skip`,
    `status`, `contoh: …`, free requests ("buatkan konten …", "analisa …").
 3. **Posting** — one cron per slot (bisnis every 2 h 08.00–20.00,
    utama 09.00/12.00/19.00): `jalankan post_threads --slot <slot>`; posts
-   only an approved option. Owner approves bisnis slots by hour
-   (`OK 14 2`), several per message; a bare `OK n` only when exactly one
-   slot is waiting, otherwise the agent asks. Utama slots are referred to
-   as `u09`/`u12`/`u19` (`skip u12`, `revisi u12 1: …`).
+   only an approved option (auto slots are approved on save). Before it
+   goes live the owner can `skip 14`, `revisi 14 1: …`, `ganti topik 14`
+   (`u12` etc. for utama; a bare `12` is always bisnis).
 4. **Manual trigger** — a message starting with `threads` from the owner: a
    one-message wizard (topic, format, image, when), 2 options in slot
    `manualN`, posted immediately or by a one-shot cron (`--at`, UTC).
@@ -86,13 +83,24 @@ re-run after every update.
    `jalankan laporan buat` prints one block per account; the agent adds 3
    suggestions, sends one WhatsApp message per account, and stores the
    suggestions with `laporan saran`.
-6. **Auto-post** (accounts in `antrian.OTOMATIS`, i.e. `utama`) — cron at
-   08.30 / 11.30 / 18.30 WIB: research, write **one** option, render a
-   visual, `antrian simpan` — which, for an auto slot, requires exactly one
-   option and stores it already `disetujui` (`otomatis: true`; `ganti`
-   keeps it approved). No WhatsApp proposal; the regular posting cron at
-   09.00 / 12.00 / 19.00 posts it and sends the link. Stricter content
-   rules apply (SKILL.md Mode 6), since nobody reviews before it goes live.
+6. **Auto-post** (accounts in `antrian.OTOMATIS` — both) — cron "Threads
+   buat <slot>" 30 min before each slot (`antrian.jam_buat`): research,
+   write **one** option, render a visual, `antrian simpan` — which, for an
+   auto slot, requires exactly one option and stores it already
+   `disetujui` (`otomatis: true`; `ganti` keeps it approved). No WhatsApp
+   proposal; "Threads posting <slot>" posts it and sends the link. Stricter
+   content rules apply (SKILL.md Mode 6), since nobody reviews before it
+   goes live.
+
+**Cron** (`cron-setup.sh`): 21 jobs, each slot a "buat" + "posting" pair
+plus the weekly report. `bash cron-setup.sh reset` removes every job whose
+name starts with `Threads ` (`openclaw cron list --all --json` →
+`openclaw cron remove <id>`; the JSON shape is undocumented, so the parser
+accepts a bare array or an object holding one, skips any banner text, and
+aborts on anything else rather than risk duplicates) and registers the set
+again; OpenClaw's own jobs are left alone. The deploy workflow runs it only
+on a manual dispatch with `reset_cron` ticked; a push never touches cron.
+Without `reset` the script only adds, so re-running it duplicates jobs.
 
 **Reports** (`laporan.py`, stdlib only — `sqlite3`): Threads Insights
 (`/{user}/threads` since/until, `/{media}/insights` views/likes/replies/
@@ -144,6 +152,15 @@ overflows 1080×1350, and records the art direction (`--arah`) so the next
 free design picks another (`jalankan ragam --saran`). Both try Playwright
 first, then a system Chrome/Chromium/Edge (Linux, macOS, Windows paths).
 Goal: no two consecutive visuals look alike — don't hard-code a single look.
+
+**Watermark** = the posting account's handle. `render_visual` and
+`render_html` require `--slot` (account from `antrian.AKUN_SLOT`) or
+`--akun <name|@handle>`; the handle comes from `antrian.handle_akun`
+(`THREADS_HANDLE[_AKUN]`, falling back to `HANDLE_BAWAAN`). `render_html`
+rejects a design missing that handle or containing another account's. Both
+write `<png>.akun` with the handle, and `antrian simpan` refuses an image
+whose `.akun` names a different account (images without one, e.g. the
+owner's photos, pass).
 
 **Accounts**: several Threads accounts, one approver (the owner), one voice.
 `utama` uses `THREADS_USER_ID` / `THREADS_ACCESS_TOKEN` / `THREADS_HANDLE`;

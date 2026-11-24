@@ -10,14 +10,14 @@ Perintah:
   riwayat  [--hari 7]               topik yang sudah diposting/diusulkan N hari terakhir
   ambil    --slot S                 cetak opsi yang disetujui (JSON)
   slot-baru                         cetak nama slot manual berikutnya hari ini (manual1, manual2, ...)
-  jadwal                            jadwal, tema, dan gelombang usulan tiap akun
+  jadwal                            jadwal, tema, dan jam pembuatan konten tiap akun
 
 Slot terjadwal per akun (JADWAL), masing-masing dengan tema sendiri (TEMA):
   bisnis (@lantip.ai.id): jam08, jam10, … jam20 — tiap 2 jam 08.00–20.00 WIB
   utama  (@nasir19noor):  u09, u12, u19 — 09.00, 12.00, 19.00 WIB
 jam08 dan u09 = utas panjang, sisanya pendek. Slot manualN = trigger manual dari WhatsApp.
-Akun OTOMATIS (utama) tanpa usulan: simpan slotnya dengan tepat 1 opsi, langsung berstatus disetujui.
-Usulan dibuat per gelombang (GELOMBANG, harus sama dengan cron-setup.sh).
+Akun OTOMATIS (keduanya) tanpa usulan: konten dibuat 30 menit sebelum jam posting (jam_buat, harus sama
+dengan cron-setup.sh), disimpan dengan tepat 1 opsi, dan langsung berstatus disetujui.
 Akun: tiap slot mencatat akun Threads tujuannya; post_threads.py memakai akun itu. Slot terjadwal
 selalu ke akun pemilik slotnya; slot manual: `--akun`, default `utama`.
 
@@ -53,16 +53,13 @@ AKUN_SLOT = {s: a for a, slot in JADWAL.items() for s in slot}
 # Slot yang formatnya utas panjang (4–7 postingan); slot lain 1 postingan pendek.
 SLOT_PANJANG = {"jam08", "u09"}
 # Akun yang slot terjadwalnya diposting otomatis tanpa usulan/persetujuan (1 opsi, langsung disetujui).
-OTOMATIS = {"utama"}
-# Gelombang usulan: satu putaran riset/usulan menyiapkan beberapa slot satu akun (cron-setup.sh).
-GELOMBANG = {
-    "pagi": ["jam08", "jam10"],
-    "siang": ["jam12", "jam14", "jam16"],
-    "sore": ["jam18", "jam20"],
-    "utama-pagi": ["u09"],
-    "utama-siang": ["u12"],
-    "utama-malam": ["u19"],
-}
+OTOMATIS = {"utama", "bisnis"}
+
+
+def jam_buat(slot: str) -> str:
+    """Jam cron pembuat konten slot otomatis: 30 menit sebelum jam posting (cron-setup.sh sama)."""
+    j = int(SLOT[slot][:2])
+    return f"{j - 1:02d}:30"
 
 
 def slot_type(s: str) -> str:
@@ -98,6 +95,36 @@ def muat_env() -> None:
             if baris and not baris.startswith("#") and "=" in baris:
                 k, v = baris.split("=", 1)
                 os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
+# Handle bawaan untuk watermark gambar bila THREADS_HANDLE[_AKUN] belum diisi di .env.
+HANDLE_BAWAAN = {"utama": "@nasir19noor", "bisnis": "@lantip.ai.id"}
+
+
+def handle_akun(akun: str) -> str:
+    """Handle Threads akun (THREADS_HANDLE untuk utama, THREADS_HANDLE_<AKUN> untuk lainnya)."""
+    muat_env()
+    nama = "THREADS_HANDLE" if akun == AKUN_UTAMA else f"THREADS_HANDLE_{akun.upper()}"
+    h = os.environ.get(nama, "").strip() or HANDLE_BAWAAN.get(akun, "")
+    if not h:
+        sys.exit(f"Handle akun {akun} tidak diketahui: isi {nama} di ~/.openclaw/.env")
+    return h if h.startswith("@") else "@" + h
+
+
+def handle_watermark(akun: str = "", slot: str = "") -> str:
+    """Handle untuk watermark gambar: dari --akun (nama akun atau @handle), atau dari akun pemilik slot."""
+    if akun.startswith("@"):
+        return akun
+    if akun:
+        return handle_akun(akun_type(akun))
+    if slot in AKUN_SLOT:
+        return handle_akun(AKUN_SLOT[slot])
+    sys.exit("Sebutkan --akun <nama akun> atau --slot <slot terjadwal> agar watermark sesuai akun yang memposting.")
+
+
+def berkas_watermark(gambar) -> Path:
+    """File pendamping gambar yang mencatat handle watermark-nya (ditulis render_visual/render_html)."""
+    return Path(os.path.expanduser(str(gambar)) + ".akun")
 
 
 def jam_slot(slot: str, s: dict = None) -> str:
@@ -197,6 +224,12 @@ def cmd_simpan(a):
         a.akun = pemilik_slot
     else:
         a.akun = a.akun or AKUN_UTAMA
+    tujuan = handle_akun(a.akun)
+    salah = [f"opsi {i}: watermark gambar {h}, padahal posting ke {tujuan} — render ulang dengan --akun {a.akun}"
+             for i, o in enumerate(opsi, 1) if o.get("gambar") and berkas_watermark(o["gambar"]).exists()
+             for h in [berkas_watermark(o["gambar"]).read_text(encoding="utf-8").strip()] if h.lower() != tujuan.lower()]
+    if salah:
+        sys.exit("GAGAL VALIDASI:\n- " + "\n- ".join(salah))
     otomatis = slot_otomatis(a.slot)
     if otomatis and len(opsi) != 1:
         sys.exit(f"Slot {a.slot} otomatis (akun {a.akun}, tanpa usulan): simpan tepat 1 opsi, bukan {len(opsi)}.")
@@ -318,9 +351,10 @@ def cmd_slot_baru(a):
 def cmd_jadwal(a):
     for akun, slot in JADWAL.items():
         jam = ", ".join(f"{s} {j}" + (" (utas panjang)" if s in SLOT_PANJANG else "") for s, j in slot.items())
-        gel = ", ".join(f"{g}: {'+'.join(sl)}" for g, sl in GELOMBANG.items() if sl[0] in slot)
         cara = "otomatis tanpa usulan" if akun in OTOMATIS else "usulan + persetujuan"
-        print(f"{akun}: tema {TEMA[akun]} ({cara})\n  posting {jam}\n  gelombang {gel}")
+        print(f"{akun} ({handle_akun(akun)}): tema {TEMA[akun]} ({cara})\n  posting {jam}")
+        if akun in OTOMATIS:
+            print("  konten dibuat " + ", ".join(f"{jam_buat(s)} → {s}" for s in slot))
 
 
 def tandai_terposting(tanggal, slot, tautan, ids):

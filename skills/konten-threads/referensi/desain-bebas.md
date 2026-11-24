@@ -14,8 +14,10 @@ seperti dari template yang sama.
 - Ukuran teks minimal: judul ≥ 64 px, isi ≥ 32 px, keterangan kecil ≥ 24 px (dibaca di layar HP).
 - Maksimal ±40 kata di dalam gambar. Gambar bukan tempat isi lengkap postingan.
 - Kontras teks terhadap latar harus tinggi.
-- Handle akun (dari env `THREADS_HANDLE` atau `THREADS_HANDLE_<AKUN>`, mis. `@akunanda`) tampil kecil di suatu tempat —
-  posisinya bebas, tidak harus di kaki.
+- **Watermark = handle akun yang memposting**: `@lantip.ai.id` untuk akun `bisnis` (slot `jam…`), `@nasir19noor`
+  untuk akun `utama` (slot `u…`). Tampil kecil di suatu tempat — posisinya bebas, tidak harus di kaki. Jangan pernah
+  menulis handle akun lain. `render_html` wajib diberi `--slot <slot>` (atau `--akun <nama>` untuk slot manual) dan
+  menolak desain yang tidak memuat handle yang benar.
 
 ## Langkah 1: pilih arah seni yang berbeda
 Jalankan `{SKILL_DIR}/scripts/jalankan ragam --saran` → 3 arah yang paling lama tidak dipakai.
@@ -68,7 +70,7 @@ template `render_visual`. Desain bebas tidak boleh terlihat seperti itu.
 ## Alur kerja
 1. Tulis file ke `~/.openclaw/workspace/konten-threads/desain/<tanggal>-<slot>-<n>.html`.
 2. Render dan catat arahnya:
-   `{SKILL_DIR}/scripts/jalankan render_html --html <file.html> --out ~/.openclaw/workspace/konten-threads/gambar/<tanggal>-<slot>-<n>.png --arah "<arah>"`
+   `{SKILL_DIR}/scripts/jalankan render_html --html <file.html> --out ~/.openclaw/workspace/konten-threads/gambar/<tanggal>-<slot>-<n>.png --arah "<arah>" --slot <slot>`
 3. Jika muncul peringatan "isi melebihi kanvas" atau "DESAIN DITOLAK", perbaiki HTML lalu render ulang.
 4. Jika tool membaca gambar tersedia, buka PNG hasilnya dan periksa: teks terbaca, tidak terpotong, tidak bertumpuk,
    dan tidak mirip gambar sebelumnya. Perbaiki maksimal 1 kali; jika masih gagal, pakai `render_visual`

@@ -3,19 +3,17 @@
 Alur:
 
 ```
-@lantip.ai.id (bisnis) — tema teknologi (AI, cloud, DevOps) & bisnis, 7 posting/hari
-  usulan 06.30: jam08 (utas panjang) + jam10 · 11.00: jam12 + jam14 + jam16 · 17.00: jam18 + jam20
-  posting 08.00 10.00 12.00 14.00 16.00 18.00 20.00 WIB
-@nasir19noor (utama) — tema teknologi, parenting, kuliner, 3 posting/hari, OTOMATIS tanpa usulan
-  konten dibuat 08.30: u09 (utas panjang) · 11.30: u12 · 18.30: u19 → langsung disetujui
-  posting 09.00 12.00 19.00 WIB
+Kedua akun posting OTOMATIS, tanpa usulan:
+@lantip.ai.id (bisnis) — tema teknologi (AI, cloud, DevOps) & bisnis
+  posting 08.00 (utas panjang) 10.00 12.00 14.00 16.00 18.00 20.00 WIB
+@nasir19noor (utama) — tema teknologi, parenting, kuliner
+  posting 09.00 (utas panjang) 12.00 19.00 WIB
 
-cron "usulan" (bisnis) → riset sesuai tema akun → 2 opsi + visual per slot → WA pemilik
-Anda balas "OK 12 1, OK 14 2" / "revisi 16 1: ..." / "skip 10" (dari nomor pemilik)
-cron "buat" (utama) → riset → 1 konten + visual → langsung disetujui (tanpa pesan WA)
-cron "posting" → konten yang disetujui diposting ke akun slotnya → tautan ke WA
-Minggu 21.00 WIB           cron "laporan" → laporan mingguan per akun (engagement, reply, follower, saran) → WA
-                                           → disimpan sebagai acuan usulan berikutnya
+30 menit sebelum slot  cron "buat"    → riset sesuai tema akun → 1 konten + visual → langsung disetujui (tanpa WA)
+jam slot               cron "posting" → diposting ke akun slotnya → tautan ke WA
+Sebelum tayang Anda bisa "skip 14" / "revisi u12 1: ..." / "ganti topik 16" (dari nomor pemilik)
+Minggu 21.00 WIB       cron "laporan" → laporan mingguan per akun (engagement, reply, follower, saran) → WA
+                                      → disimpan sebagai acuan konten berikutnya
 Kapan saja: kirim "threads" dari nomor pemilik → bot bertanya topik, format, gambar, waktu → usulan → OK → posting
           atau chat bebas: "buatkan konten tema X" / "analisa tren buku minggu ini"
 ```
@@ -37,11 +35,11 @@ skills/konten-threads/
   scripts/render_html.py    desain bebas buatan Claude (HTML/SVG) → PNG
   referensi/desain-bebas.md aturan & arah desain bebas
   scripts/ragam.py          ingatan gaya visual agar gambar tidak seragam
-  scripts/antrian.py        antrian usulan & persetujuan per slot
+  scripts/antrian.py        antrian konten per slot, jadwal & tema tiap akun
   scripts/post_threads.py   posting ke Threads API (utas berantai + gambar)
   scripts/laporan.py        laporan mingguan dari Threads Insights → SQLite + JSON/MD + pesan WA
 pasang.sh                   memasang skill + mengisi nomor pemilik dari ~/.openclaw/.env
-cron-setup.sh               mendaftarkan 17 cron job (bisnis 3+7, utama 3+3, 1 laporan); `utama` = 6 job utama, `utama-buat` = 3 job buat
+cron-setup.sh               mendaftarkan 21 cron job (bisnis 7+7, utama 3+3, 1 laporan); `reset` = hapus job Threads lalu daftarkan ulang
 .github/workflows/deploy.yml  deploy otomatis ke server OpenClaw (self-hosted runner)
 AGENTS-tambahan.md          aturan pemicu kata "threads" (tempel ke AGENTS.md)
 env.example                 variabel yang perlu diisi
@@ -119,9 +117,10 @@ openclaw gateway restart
 ### 7. Uji coba
 ```bash
 openclaw cron list
-openclaw cron run <id "Threads usulan siang">   # usulan jam12, jam14, jam16 harus masuk ke WA pemilik
+openclaw cron run <id "Threads buat jam12">     # konten jam12 dibuat & disetujui, tanpa pesan WA
+~/.openclaw/workspace/skills/konten-threads/scripts/jalankan antrian status
 ```
-Balas "OK 12 1" dari nomor pemilik, lalu uji posting tanpa benar-benar memposting:
+Uji posting tanpa benar-benar memposting:
 ```bash
 ~/.openclaw/workspace/skills/konten-threads/scripts/jalankan post_threads --slot jam12 --dry-run
 ```
@@ -143,61 +142,48 @@ Bot lalu mengirim 2 opsi. Balas `OK 1` untuk menyetujui, dan konten akan diposti
 
 | Ketik | Hasil |
 |---|---|
-| `OK 14 2` | setujui opsi 2 slot 14.00 @lantip.ai.id (`jam14`) |
-| `OK 12 1, 14 2, 16 1` | setujui beberapa slot sekaligus |
-| `OK 2` | hanya jika tinggal satu slot yang menunggu; selain itu bot menanyakan slotnya |
-| `revisi 14 2: lebih santai, tambah sudut Purwokerto` | opsi 2 slot 14.00 ditulis ulang |
-| `ganti topik 16` | 2 usulan baru untuk slot 16.00 |
-| `skip 10` / `skip u19` | slot itu dilewati hari ini (untuk @nasir19noor: sebelum jam posting) |
-| `revisi u12 1: lebih singkat` | tulis ulang konten otomatis @nasir19noor sebelum tayang (tetap otomatis) |
+| `skip 10` / `skip u19` | slot itu dilewati hari ini (sebelum jam posting) |
+| `revisi 14 1: lebih santai` / `revisi u12 1: …` | konten otomatis slot itu ditulis ulang sebelum tayang |
+| `ganti topik 16` | konten slot 16.00 dibuat ulang dengan topik lain |
+| `OK 1` / `OK 2` | hanya untuk usulan manual (`threads …` atau "buatkan konten") |
 | `status` | ringkasan hari ini, semua slot kedua akun (`[bisnis]` / `[utama]`) |
 | `contoh: <teks postingan Anda>` | disimpan sebagai acuan gaya bahasa |
 | `daftar contoh` / `hapus contoh 3` | kelola contoh gaya |
-| `buatkan konten tema parenting gen alpha untuk jam 20` | usulan bertema |
+| `buatkan konten tema parenting gen alpha` | usulan manual bertema (2 opsi, perlu `OK`) |
 | `analisa tren teknologi minggu ini` | ringkasan + ide konten |
 | `threads laporan` / `threads laporan @bisnis` | laporan mingguan sekarang (semua akun / satu akun) |
 
-## Tema & jadwal per akun (sejak skill 1.9.0)
+## Tema & jadwal per akun (sejak skill 1.12.0: keduanya otomatis)
 
-| Akun | Tema | Posting terjadwal | Cara |
+| Akun | Tema | Posting | Konten dibuat |
 |---|---|---|---|
-| @lantip.ai.id (`bisnis`) | teknologi (AI, cloud, DevOps) dan bisnis | 7×: 08.00 (utas panjang), 10.00, 12.00, 14.00, 16.00, 18.00, 20.00 | usulan 06.30, 11.00, 17.00 → Anda setujui |
-| @nasir19noor (`utama`) | teknologi, parenting, kuliner | 3×: 09.00 (utas panjang), 12.00, 19.00 | **otomatis**: konten dibuat 08.30, 11.30, 18.30, langsung tayang |
+| @lantip.ai.id (`bisnis`) | teknologi (AI, cloud, DevOps) dan bisnis | 7×: 08.00 (utas panjang), 10.00, 12.00, 14.00, 16.00, 18.00, 20.00 | 30 menit sebelumnya (07.30 … 19.30) |
+| @nasir19noor (`utama`) | teknologi, parenting, kuliner | 3×: 09.00 (utas panjang), 12.00, 19.00 | 08.30, 11.30, 18.30 |
 
-Jadwal dan tema ada di `antrian.py` (`JADWAL`, `TEMA`, `OTOMATIS`; cek dengan `jalankan antrian jadwal`) dan harus
-sama dengan `cron-setup.sh`. Slot akun utama bernama `u09`, `u12`, `u19`. `THREADS_AKUN_JADWAL` di `.env` tidak
-dipakai lagi (boleh dihapus).
+**Tanpa usulan.** Untuk tiap slot ada dua cron job: **"Threads buat <slot>"** 30 menit sebelum jam posting membuat
+satu konten sesuai tema akun (riset, tulisan, gambar) dan menyimpannya sebagai sudah disetujui, tanpa pesan WA;
+**"Threads posting <slot>"** di jam slotnya memposting dan mengirim tautannya ke WA, jadi Anda bisa memeriksa dan
+menghapusnya di aplikasi Threads bila perlu. Sebelum tayang Anda masih bisa `skip 14`, `revisi 14 1: …`,
+`ganti topik 14`, atau `status` (`u12` dst. untuk @nasir19noor). Karena tidak diperiksa dulu, konten otomatis
+menghindari topik sensitif (duka, politik, SARA, kesehatan berisiko, isu hukum, saran investasi) dan memilih topik
+evergreen bila kabar terbaru belum pasti.
 
-**@nasir19noor tanpa usulan (sejak skill 1.10.0).** 30 menit sebelum jam posting, bot membuat satu konten dan
-menyimpannya sebagai sudah disetujui, tanpa pesan WA. Di jam posting, konten tayang dan tautannya dikirim ke WA, jadi
-Anda bisa memeriksa dan menghapusnya di aplikasi Threads bila perlu. Sebelum tayang Anda masih bisa `skip u12`,
-`revisi u12 1: …`, atau `status`. Karena tidak diperiksa dulu, konten otomatis menghindari topik sensitif (duka,
-politik, SARA, kesehatan berisiko, isu hukum) dan memilih topik evergreen bila kabar terbaru belum pasti.
+Jadwal dan tema ada di `antrian.py` (`JADWAL`, `TEMA`, `OTOMATIS`, `jam_buat`; cek dengan `jalankan antrian jadwal`)
+dan harus sama dengan `cron-setup.sh`. Slot akun utama bernama `u09`, `u12`, `u19` (jam 12.00 dipakai kedua akun).
+`THREADS_AKUN_JADWAL` di `.env` tidak dipakai lagi (boleh dihapus).
 
-**Pindah dari versi usulan (1.9.0) di server yang sudah berjalan:**
-1. `openclaw cron list` → hapus 3 job **Threads usulan utama pagi/siang/malam** (mis. `openclaw cron rm <id>`).
-   Job **Threads posting u09/u12/u19** tetap dipakai.
-2. `bash cron-setup.sh utama-buat` → mendaftarkan 3 job **Threads buat utama pagi/siang/malam**.
-3. `openclaw cron list` → total 17 job: bisnis 3+7, utama 3 buat + 3 posting, laporan 1.
+### Hapus semua cron job Threads dan daftarkan ulang
 
-Server yang belum punya job akun utama sama sekali cukup `bash cron-setup.sh utama` (6 job).
+Dipakai saat pindah versi, atau bila daftar job di server tidak lagi cocok dengan repo (mis. job buatan tangan).
+Job yang namanya diawali **"Threads "** dihapus semua, lalu 21 job didaftarkan ulang: bisnis 7 buat + 7 posting,
+utama 3 buat + 3 posting, laporan mingguan 1. Job bawaan OpenClaw (Heartbeat, memory) tidak disentuh.
 
-## Jadwal 7 slot (sejak skill 1.8.0)
+- **Dari GitHub:** **Actions → Deploy konten-threads → Run workflow**, centang **reset_cron**, lalu Run. Skill
+  dipasang dulu, kemudian cron di-reset; ringkasannya tampil di halaman run.
+- **Dari server:** `bash cron-setup.sh reset` (di folder repo).
 
-Akun bisnis (@lantip.ai.id) posting tiap 2 jam, **08.00–20.00 WIB**. Slot `jam08` berupa utas panjang (4–7 postingan), enam
-slot lain satu postingan pendek. Usulan dikirim dalam **3 gelombang** (06.30, 11.00, 17.00), **2 opsi per slot**,
-dengan topik yang tidak berulang dalam satu hari. Slot yang tidak disetujui sampai jamnya tidak diposting.
-Desain bebas dipakai untuk satu opsi per gelombang; sisanya template yang tampilannya otomatis berganti.
-
-**Pindah dari jadwal lama (pagi/siang/malam).** Nama slot lama sudah tidak dikenal, jadi 6 job lama harus diganti:
-1. `openclaw cron list` → hapus job **Threads usulan pagi/siang/malam** dan **Threads posting pagi/siang/malam**
-   (lihat `openclaw cron --help` untuk perintah hapusnya, mis. `openclaw cron rm <id>`). Job **Threads laporan
-   mingguan** biarkan.
-2. Daftarkan job baru. Paling mudah: hapus juga job laporan mingguan, lalu `bash cron-setup.sh` (mendaftarkan
-   ke-11 job sekaligus). Atau jalankan hanya bagian usulan dan posting dari `cron-setup.sh`.
-3. `openclaw cron list` → harus ada 3 job usulan, 7 job posting (`jam08` … `jam20`), 1 laporan.
-
-Usulan lama yang tersimpan dengan slot pagi/siang/malam tetap terlihat di `status`, tetapi tidak akan diposting.
+Cek hasilnya dengan `openclaw cron list`. `bash cron-setup.sh` tanpa `reset` hanya menambah job, jadi jangan dijalankan
+di server yang sudah punya job Threads (job akan dobel).
 
 ## Laporan mingguan
 
@@ -214,17 +200,11 @@ per jam posting (dibulatkan ke jam terdekat), jadi terlihat slot mana yang palin
 - **Disimpan** di `~/.openclaw/workspace/konten-threads/laporan/`: `laporan.db` (SQLite: postingan, metrik per
   pengambilan, follower, laporan + saran), `<akun>/<YYYY-Www>.json` dan `.md`, serta `pelajaran.md`
   (4 laporan terakhir + tren 8 minggu per akun). Agen membacanya (`jalankan laporan ringkas --akun …`) sebelum
-  menyusun usulan.
+  membuat konten.
 - **Syarat:** token setiap akun punya izin `threads_manage_insights`. Token lama belum punya: tambahkan izinnya di
   aplikasi Meta, buat token baru untuk tiap akun, isi `~/.openclaw/.env`, lalu `openclaw gateway restart`.
-- **Sudah menjalankan `cron-setup.sh` sebelumnya?** Jangan ulangi (job lain jadi dobel); tambahkan job ini saja
-  (ganti `<nomor pemilik>`):
-  ```bash
-  openclaw cron add --name "Threads laporan mingguan" --cron "0 21 * * 0" --tz "Asia/Jakarta" \
-    --session isolated \
-    --message "Jalankan skill konten-threads Mode 5: laporan mingguan semua akun, satu pesan WA per akun ke <nomor pemilik>, lalu simpan sarannya." \
-    --announce --channel whatsapp --to "<nomor pemilik>"
-  ```
+- **Job laporan belum ada di server?** Jalankan reset cron (lihat *Hapus semua cron job Threads dan daftarkan
+  ulang*); job laporan ikut didaftarkan.
 
 ## Deploy otomatis (GitHub Actions)
 
@@ -245,7 +225,8 @@ Workflow ini berjalan **di server itu sendiri**, lewat self-hosted runner. Pasan
    standar, tambahkan folder itu ke `~/actions-runner/.path`, lalu `sudo ./svc.sh stop && sudo ./svc.sh start`.
 
 `THREADS_PEMILIK` tetap harus ada di `~/.openclaw/.env` — workflow berhenti dengan pesan jelas jika belum.
-Cron tidak perlu didaftarkan ulang saat deploy.
+Push tidak menyentuh cron. Untuk menghapus semua job Threads dan mendaftarkannya ulang, jalankan workflow secara manual
+dengan **reset_cron** dicentang (lihat *Hapus semua cron job Threads dan daftarkan ulang*).
 
 ## Beberapa akun Threads
 
@@ -268,6 +249,10 @@ tiap akun ditandai jam terjadwalnya, dan ada peringatan bila akun berjadwal belu
 
 **Memakai**: sebut akunnya di pesan pemicu, mis. `threads @bisnis teknologi pendek` atau `threads akun bisnis …`.
 Tanpa sebutan akun, konten untuk `utama`. Setiap usulan menyebut handle tujuannya, jadi periksa sebelum `OK`.
+
+**Watermark gambar** selalu handle akun yang memposting: @lantip.ai.id untuk slot `jam…`, @nasir19noor untuk slot
+`u…` (atau akun yang disebut untuk slot manual). Handle diambil dari `THREADS_HANDLE` / `THREADS_HANDLE_BISNIS` di
+`.env`; jika kosong, dipakai kedua handle di atas. Gambar dengan watermark akun lain ditolak saat disimpan ke antrian.
 
 ## Perawatan
 - **Token Threads** berlaku 60 hari, per akun. Perpanjang tiap bulan dengan `jalankan post_threads --refresh-token`

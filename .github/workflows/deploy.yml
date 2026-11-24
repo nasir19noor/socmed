@@ -13,6 +13,11 @@ on:
       - 'AGENTS-tambahan.md'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
+    inputs:
+      reset_cron:
+        description: 'Hapus semua cron job "Threads …" lalu daftarkan ulang dari cron-setup.sh'
+        type: boolean
+        default: false
 
 # One deploy at a time: two overlapping copies would race on the skill folder.
 concurrency:
@@ -81,3 +86,15 @@ jobs:
           openclaw gateway restart
           echo "### Terpasang" >> "$GITHUB_STEP_SUMMARY"
           echo "konten-threads @ \`${GITHUB_SHA::7}\`, gateway di-restart." >> "$GITHUB_STEP_SUMMARY"
+
+      # Only on a manual run with reset_cron ticked: every cron job whose
+      # name starts with "Threads " is removed and the full set from
+      # cron-setup.sh registered again. OpenClaw's own jobs (Heartbeat,
+      # memory) are left alone. A push never touches cron.
+      - name: Reset the Threads cron jobs
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.reset_cron }}
+        run: |
+          export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:/usr/local/bin:$PATH"
+          bash cron-setup.sh reset | tee "$RUNNER_TEMP/cron.txt"
+          echo "### Cron di-reset" >> "$GITHUB_STEP_SUMMARY"
+          grep -E '^(Dihapus|Selesai)' "$RUNNER_TEMP/cron.txt" >> "$GITHUB_STEP_SUMMARY" || true
