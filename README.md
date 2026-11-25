@@ -41,6 +41,7 @@ skills/konten-threads/
 pasang.sh                   memasang skill + mengisi nomor pemilik dari ~/.openclaw/.env
 cron-setup.sh               mendaftarkan 21 cron job (bisnis 7+7, utama 3+3, 1 laporan); `reset` = hapus job Threads lalu daftarkan ulang
 .github/workflows/deploy.yml  deploy otomatis ke server OpenClaw (self-hosted runner)
+.github/workflows/hapus-gambar.yml  hapus semua gambar di server setiap hari 23.00 WIB
 AGENTS-tambahan.md          aturan pemicu kata "threads" (tempel ke AGENTS.md)
 env.example                 variabel yang perlu diisi
 ```
@@ -229,6 +230,16 @@ Workflow ini berjalan **di server itu sendiri**, lewat self-hosted runner. Pasan
 `THREADS_PEMILIK` tetap harus ada di `~/.openclaw/.env` — workflow berhenti dengan pesan jelas jika belum.
 Push tidak menyentuh cron. Untuk menghapus semua job Threads dan mendaftarkannya ulang, jalankan workflow secara manual
 dengan **reset_cron** dicentang (lihat *Hapus semua cron job Threads dan daftarkan ulang*).
+
+### Hapus gambar harian
+
+`.github/workflows/hapus-gambar.yml` berjalan setiap hari pukul **23.00 WIB** (cron GitHub `0 16 * * *`, UTC) di
+runner yang sama dan menghapus semua isi `~/.openclaw/workspace/konten-threads/gambar/` (PNG dan file `.akun`).
+Jam itu sesudah posting terakhir (20.00) dan sebelum konten pertama dibuat (07.30), jadi gambar slot terjadwal tidak
+ikut terhapus sebelum tayang; gambar yang sudah diposting sudah tersimpan di imgbb/Threads. Jumlah file yang dihapus
+tampil di ringkasan run. Bisa juga dijalankan manual: **Actions → Hapus gambar konten-threads → Run workflow**.
+Catatan: usulan manual untuk tanggal berikutnya yang gambarnya dibuat hari ini ikut terhapus dan perlu dirender ulang.
+Jadwal GitHub bisa terlambat beberapa menit, dan hanya berjalan dari branch default (`main`).
 
 ## Beberapa akun Threads
 

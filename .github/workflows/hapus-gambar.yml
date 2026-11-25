@@ -1,0 +1,38 @@
+name: 'Hapus gambar konten-threads'
+
+# Deletes every rendered image (and its .akun watermark sidecar) from
+# ~/.openclaw/workspace/konten-threads/gambar/ once a day. Runs on the
+# OpenClaw host through the same self-hosted runner as deploy.yml.
+# 16:00 UTC = 23:00 WIB: after the last post (20:00) and before the first
+# "Threads buat" job (07:30), so no queued scheduled slot loses its image.
+# Posted images are already hosted on imgbb/Threads and are not needed again.
+on:
+  schedule:
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: hapus-gambar
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  hapus:
+    name: Delete all images
+    runs-on: [self-hosted, contabo-2-openclaw]
+
+    steps:
+      - name: Delete everything in the image folder
+        run: |
+          GAMBAR="$HOME/.openclaw/workspace/konten-threads/gambar"
+          if [ ! -d "$GAMBAR" ]; then
+            echo "Folder $GAMBAR belum ada, tidak ada yang dihapus."
+            exit 0
+          fi
+          JUMLAH=$(find "$GAMBAR" -mindepth 1 -type f | wc -l)
+          find "$GAMBAR" -mindepth 1 -delete
+          echo "Dihapus: $JUMLAH file dari $GAMBAR"
+          echo "### Gambar dihapus" >> "$GITHUB_STEP_SUMMARY"
+          echo "$JUMLAH file dari \`$GAMBAR\`." >> "$GITHUB_STEP_SUMMARY"

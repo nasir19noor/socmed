@@ -50,6 +50,15 @@ emptying step sets `konten-threads/referensi/contoh-postingan.md` aside in
 exist only on the host and must survive every deploy. Cron jobs
 are not touched; `cron-setup.sh` stays a one-time manual step.
 
+**Image cleanup**: `.github/workflows/hapus-gambar.yml`, a GitHub schedule
+(`0 16 * * *` UTC = 23:00 WIB, plus manual dispatch) on the same runner,
+deletes everything in `~/.openclaw/workspace/konten-threads/gambar/`
+(PNGs and `.akun` sidecars). It is deliberately not an OpenClaw cron job.
+23:00 WIB sits between the last post (20:00) and the first "Threads buat"
+(07:30); images are not needed after posting (they are uploaded to imgbb).
+A manual proposal for a later date whose image was rendered earlier loses
+it and must be re-rendered.
+
 Nothing here is a service or a build: `pasang.sh` copies the skill folder
 onto the OpenClaw host (Linux, user `openclaw`) and the agent runs the
 scripts there. It keeps the host's `referensi/contoh-postingan.md` (the
