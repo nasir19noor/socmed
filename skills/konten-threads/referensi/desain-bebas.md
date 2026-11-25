@@ -2,7 +2,8 @@
 
 Dipakai saat pemilik memilih gambar **"desain bebas"**, dan untuk satu opsi per slot terjadwal.
 Desain harus ringkas: satu file HTML pendek (±150 baris), tanpa ilustrasi SVG yang sangat rumit.
-Kamu bertindak sebagai desainer grafis (art director): buat **satu file HTML mandiri** yang khusus untuk isi
+Kamu bertindak sebagai desainer grafis (art director): buat **satu file HTML mandiri** (satu-satunya berkas luar yang boleh: foto dari
+`jalankan foto ambil`, lihat *Larangan*) yang khusus untuk isi
 postingan ini. Tujuannya: feed tidak terlihat seragam. Dua gambar berturut-turut **tidak boleh** terasa
 seperti dari template yang sama.
 
@@ -63,7 +64,11 @@ Kombinasi **label pil + bulatan pastel di pojok + judul Fraunces + garis kaki `@
 template `render_visual`. Desain bebas tidak boleh terlihat seperti itu.
 
 ## Larangan
-- Tidak menggambar orang sungguhan, tokoh publik, logo/merek, atau karakter fiksi berhak cipta.
+- Tidak **menggambar** orang sungguhan, tokoh publik, logo/merek, atau karakter fiksi berhak cipta.
+- Foto asli boleh, tetapi **hanya** dari `jalankan foto ambil` (lisensi bebas, dicek skrip): pakai `uri` yang
+  dicetaknya di `<img src>` atau `background:url()`, dan tampilkan teks `kredit` persis sebagai baris kecil yang
+  terbaca (mis. 18–22px, kontras cukup). `render_html` menolak berkas lokal lain dan foto tanpa kredit. Foto boleh
+  di-crop/diberi overlay, tetapi wajah tokoh tidak diedit dan teks tidak mengubah makna foto.
 - Tidak menyalin desain poster/sampul buku yang sudah ada.
 - Tidak memasukkan data/angka yang tidak ada sumbernya.
 

@@ -33,6 +33,7 @@ skills/konten-threads/
   templates/visual.html     template visual 1080×1350, 7 tata letak
   scripts/render_visual.py  template standar → PNG
   scripts/render_html.py    desain bebas buatan Claude (HTML/SVG) → PNG
+  scripts/foto.py           cari & unduh foto asli berlisensi bebas (Wikimedia Commons, Openverse)
   referensi/desain-bebas.md aturan & arah desain bebas
   scripts/ragam.py          ingatan gaya visual agar gambar tidak seragam
   scripts/antrian.py        antrian konten per slot, jadwal & tema tiap akun
@@ -135,6 +136,14 @@ Kirim **`threads`** ke nomor bot. Bot akan bertanya dalam satu pesan:
 3. Gambar: kartu judul, daftar poin, kutipan besar, foto sendiri, tanpa gambar, atau **desain bebas** (Claude mendesain HTML/SVG khusus)
 4. Waktu posting: langsung setelah OK, atau jam tertentu
 
+**Foto asli:** bila topiknya subjek nyata (kuliner tertentu, tokoh publik, tempat), Claude berusaha memakai foto
+aslinya, dicari lewat `jalankan foto cari "<subjek>"` lalu `jalankan foto ambil <id>`. Sumbernya hanya Wikimedia
+Commons dan Openverse dengan lisensi bebas (CC0, domain publik, CC BY, CC BY-SA), dan lisensinya diperiksa skrip.
+Foto dipakai dalam desain bebas dengan baris kredit kecil di gambar (mis. *Foto: Hersy ardianty a / Wikimedia
+Commons, CC BY-SA 4.0*). Desain tanpa kredit ditolak `render_html`. Tokoh: hanya tokoh publik dalam konteks netral,
+tanpa anak-anak. Foto dari situs berita, Instagram, atau Google Images tidak dipakai karena berhak cipta. Jika tidak
+ada foto yang cocok, visual dibuat tanpa foto seperti biasa.
+
 Cukup jawab singkat, misalnya `1c 2a 3c 4a`. Bisa juga langsung lengkap dalam satu pesan, misalnya
 `threads parenting panjang daftar poin jam 15.30`. Kirim `threads cepat` untuk memakai pilihan default.
 Bot lalu mengirim 2 opsi. Balas `OK 1` untuk menyetujui, dan konten akan diposting langsung atau sesuai jam yang dipilih.
@@ -236,8 +245,8 @@ dengan **reset_cron** dicentang (lihat *Hapus semua cron job Threads dan daftark
 `.github/workflows/hapus-gambar.yml` berjalan setiap hari pukul **23.00 WIB** (cron GitHub `0 16 * * *`, UTC) di
 runner yang sama dan menghapus semua isi `~/.openclaw/workspace/konten-threads/gambar/` (PNG dan file `.akun`).
 Jam itu sesudah posting terakhir (20.00) dan sebelum konten pertama dibuat (07.30), jadi gambar slot terjadwal tidak
-ikut terhapus sebelum tayang; gambar yang sudah diposting sudah tersimpan di imgbb/Threads. Jumlah file yang dihapus
-tampil di ringkasan run. Bisa juga dijalankan manual: **Actions → Hapus gambar konten-threads → Run workflow**.
+ikut terhapus sebelum tayang; gambar yang sudah diposting sudah tersimpan di imgbb/Threads. Sebelum menghapus,
+workflow mencetak daftar file (waktu ubah, ukuran, nama) ke log dan ke ringkasan run, beserta jumlahnya. Bisa juga dijalankan manual: **Actions → Hapus gambar konten-threads → Run workflow**.
 Catatan: usulan manual untuk tanggal berikutnya yang gambarnya dibuat hari ini ikut terhapus dan perlu dirender ulang.
 Jadwal GitHub bisa terlambat beberapa menit, dan hanya berjalan dari branch default (`main`).
 

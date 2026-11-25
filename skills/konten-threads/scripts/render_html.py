@@ -4,19 +4,24 @@
   jalankan render_html --html /path/desain.html --out /path/hasil.png --arah "koran"
 
 Desain harus satu file HTML mandiri (CSS & SVG di dalam file). Lihat referensi/desain-bebas.md.
-Skrip menolak desain yang memuat gambar/skrip dari luar (kecuali Google Fonts) dan memperingatkan
+Skrip menolak desain yang memuat gambar/skrip dari luar (kecuali Google Fonts) atau berkas lokal selain
+foto dari `jalankan foto ambil` (teks kredit foto itu wajib tampil di desain), dan memperingatkan
 jika isi halaman melebihi kanvas 1080x1350. --arah mencatat arah seni yang dipakai (ragam.py),
 agar desain berikutnya memilih arah lain. --slot atau --akun wajib: desain harus memuat handle akun yang
 memposting (watermark) dan tidak boleh memuat handle akun lain.
 """
 import argparse
+import json
 import os
 import re
 import sys
 import tempfile
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import foto  # noqa: E402
 import ragam  # noqa: E402
 from render_visual import render_chrome  # noqa: E402
 
@@ -34,6 +39,25 @@ def periksa(html: str) -> list:
             masalah.append(f"url() luar tidak diizinkan: {url}")
     if re.search(r"<script[^>]+src=", html, re.I):
         masalah.append("<script src=...> tidak diizinkan")
+    return masalah + periksa_foto(html)
+
+
+def periksa_foto(html: str) -> list:
+    """Berkas lokal hanya boleh foto dari `jalankan foto ambil`, dan teks kreditnya harus tampil di desain."""
+    masalah = []
+    teks = foto.teks_polos(re.sub(r"<(style|script)\b.*?</\1>", " ", html, flags=re.I | re.S)).lower()
+    refs = re.findall(r"""(?:src|href)\s*=\s*["']((?:file:|/)[^"']+)""", html, re.I)
+    refs += re.findall(r"""url\(\s*["']?((?:file:|/)[^"')]+)""", html, re.I)
+    for ref in dict.fromkeys(refs):
+        p = Path(urllib.request.url2pathname(urllib.parse.urlparse(ref).path) if ref.startswith("file:")
+                 else urllib.parse.unquote(ref))
+        side = Path(str(p) + ".sumber.json")
+        if foto.FOTO.resolve() not in p.resolve().parents or not p.exists() or not side.exists():
+            masalah.append(f"berkas lokal hanya boleh foto dari 'jalankan foto ambil' (di {foto.FOTO}): {ref}")
+            continue
+        k = json.loads(side.read_text(encoding="utf-8"))["kredit"]
+        if re.sub(r"\s+", " ", k).lower() not in teks:
+            masalah.append(f"kredit foto harus tampil persis di desain: \"{k}\"")
     return masalah
 
 

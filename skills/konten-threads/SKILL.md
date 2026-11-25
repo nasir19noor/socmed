@@ -1,7 +1,7 @@
 ---
 name: konten-threads
 description: Riset topik tren sesuai tema akun, buat konten Threads berbahasa Indonesia lengkap dengan visual, lalu posting otomatis ke Threads. Dipakai oleh cron (dua akun dengan tema & jadwal sendiri, keduanya otomatis tanpa usulan: @lantip.ai.id 7 slot, @nasir19noor 3 slot), oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
-version: 1.13.0
+version: 1.14.0
 metadata:
   openclaw:
     requires:
@@ -101,6 +101,21 @@ Akun diambil dari permintaan atau slotnya (`jam…` = bisnis, `u…` = utama).
 4. **Buat visual** untuk tiap opsi. **Visual tidak boleh seragam:** opsi dalam satu slot memakai tampilan yang
    berbeda, dan gambar hari ini tidak mirip gambar kemarin. Cek dulu `{SKILL_DIR}/scripts/jalankan ragam`
    (gaya yang dipakai belakangan).
+   **Foto asli dulu.** Jika topiknya subjek nyata yang bisa difoto — makanan/kuliner tertentu, tokoh publik, tempat,
+   bangunan, produk/perangkat — **usahakan memakai foto aslinya** (bukan ilustrasi):
+   ```bash
+   {SKILL_DIR}/scripts/jalankan foto cari "tempe mendoan"     # kandidat berlisensi bebas + penulis/lisensi
+   {SKILL_DIR}/scripts/jalankan foto ambil commons:File:Mendoan.jpg   # cetak path, uri, kredit
+   ```
+   Pilih kandidat yang judul/deskripsinya **benar-benar subjek itu** (mendoan, bukan tempe goreng biasa; foto tokoh
+   itu sendiri, bukan karikatur, bukan foto bersama orang yang tidak dibahas). Pakai di **desain bebas**
+   (`render_html`): `<img src="<uri>">` atau `background:url(<uri>)`, dan tampilkan **teks `kredit` persis** sebagai
+   baris kecil yang terbaca di gambar — `render_html` menolak foto tanpa kredit. Tambahkan `halaman` foto ke `sumber`.
+   Foto memakai slot desain bebas putaran itu. Jika tidak ada kandidat yang cocok atau `foto` gagal, lanjut tanpa foto.
+   Aturan foto: hanya dari `jalankan foto` (Wikimedia Commons/Openverse, lisensi dicek skrip; **jangan** mengambil
+   foto dari situs berita, Instagram, Google Images, atau situs restoran). Tokoh: hanya tokoh publik dalam konteks
+   netral/positif, tanpa anak-anak, wajah tidak diedit atau diberi teks yang mengubah maknanya. Jangan menyiratkan
+   foto itu milik pemilik ("makan siang saya tadi") — tetap berlaku aturan tanpa cerita fiktif.
    **Desain bebas — paling banyak 1 gambar per putaran kerja, agar satu putaran tidak terlalu panjang.** Gambar
    lainnya memakai template cepat:
    ikuti `referensi/desain-bebas.md`: ambil arah seni lewat `jalankan ragam --saran`, tulis HTML/SVG khusus, lalu render:
@@ -338,6 +353,8 @@ Pemilik meminta semua slot terjadwal kedua akun diposting **tanpa usulan dan tan
      keuangan spesifik, atau menyebut orang/perusahaan tertentu secara negatif. Tanpa promosi/jualan.
    - Cek draf terhadap `referensi/contoh-postingan.md` dan batas karakter sebelum menyimpan.
 3. Visual: template cepat (`render_visual --slot <slot>`) atau desain bebas (`render_html --slot <slot>`), satu gambar.
+   Untuk kuliner, tokoh publik, atau tempat tertentu, coba dulu foto asli (`jalankan foto cari/ambil`, lihat Mode 1
+   langkah 4) dalam desain bebas dengan kredit tampil; jika tidak ada yang cocok, lanjut tanpa foto.
 4. Simpan — skrip langsung menandainya **disetujui** (slot otomatis hanya menerima tepat 1 opsi):
    ```bash
    {SKILL_DIR}/scripts/jalankan antrian simpan --slot <slot> <<'JSON'
@@ -359,5 +376,6 @@ tetap otomatis), `ganti topik 14`, atau `status`.
 - **Jangan mengarang pengalaman pribadi** pemilik (kedua akun): tidak ada "tadi saya…", "anak saya…", "klien saya…",
   tempat, pembelian, atau percakapan yang tidak pernah ia ceritakan. Opini dan sikap ("menurut saya…") boleh;
   kejadian karangan tidak.
-- Hindari SARA, politik partisan, hoaks, data pribadi orang lain, dan foto orang sungguhan di visual.
+- Hindari SARA, politik partisan, hoaks, dan data pribadi orang lain. Foto orang sungguhan di visual hanya tokoh
+  publik lewat `jalankan foto` (lisensi bebas, kredit tampil), tidak pernah orang biasa atau anak-anak.
 - Isu duka/bencana: nada empatik, tanpa jualan, tanpa candaan.

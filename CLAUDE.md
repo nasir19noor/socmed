@@ -28,6 +28,7 @@ skills/konten-threads/          the OpenClaw skill — copied to ~/.openclaw/wor
   scripts/post_threads.py       posts the approved option to the Threads API
   scripts/render_visual.py      template card → PNG (Playwright, Chrome fallback)
   scripts/render_html.py        agent-written HTML/SVG → PNG, with safety checks
+  scripts/foto.py               find/download free-license real photos (Commons, Openverse)
   scripts/ragam.py              visual style memory (ragam.json) so images don't look alike
   scripts/contoh.py             add / list / remove style examples
 pasang.sh                       installs/updates the skill on the host, filling in the owner's number
@@ -53,7 +54,8 @@ are not touched; `cron-setup.sh` stays a one-time manual step.
 **Image cleanup**: `.github/workflows/hapus-gambar.yml`, a GitHub schedule
 (`0 16 * * *` UTC = 23:00 WIB, plus manual dispatch) on the same runner,
 deletes everything in `~/.openclaw/workspace/konten-threads/gambar/`
-(PNGs and `.akun` sidecars). It is deliberately not an OpenClaw cron job.
+(PNGs and `.akun` sidecars), after listing them (mtime, size, name) in the
+log and the run summary. It is deliberately not an OpenClaw cron job.
 23:00 WIB sits between the last post (20:00) and the first "Threads buat"
 (07:30); images are not needed after posting (they are uploaded to imgbb).
 A manual proposal for a later date whose image was rendered earlier loses
@@ -156,7 +158,9 @@ the 60-day long-lived token.
 `--angka` big stat, `--gaya kutipan`. Layout, font and palette default to
 `auto` = least recently used, recorded in `ragam.json` (next to the queue
 folder) by `ragam.py`. `render_html.py` renders an agent-written HTML file,
-**rejects external resources** except Google Fonts, warns when content
+**rejects external resources** except Google Fonts (and local files other
+than photos fetched by `foto.py`, whose `kredit` text must appear in the
+design — see *Real photos*), warns when content
 overflows 1080×1350, and records the art direction (`--arah`) so the next
 free design picks another (`jalankan ragam --saran`). Both try Playwright
 first, then a system Chrome/Chromium/Edge (Linux, macOS, Windows paths).
@@ -170,6 +174,22 @@ rejects a design missing that handle or containing another account's. Both
 write `<png>.akun` with the handle, and `antrian simpan` refuses an image
 whose `.akun` names a different account (images without one, e.g. the
 owner's photos, pass).
+
+**Real photos** (SKILL 1.14.0): for a concrete subject (a dish, a public
+figure, a place) the agent tries a real photo first. `foto.py cari <kata>`
+searches Wikimedia Commons and Openverse; `foto.py ambil <commons:File:…|
+openverse:<id>>` re-reads the license **from the source API** (never from
+the agent), accepts only CC0 / public domain / CC BY / CC BY-SA (NC and ND
+rejected: images get text and the bisnis account is commercial-ish), checks
+the bytes are JPG/PNG/WebP (≤ 20 MB), and saves to `<gambar>/foto/` with
+`<file>.sumber.json` (`kredit`, `halaman`, …). Folder from
+`KONTEN_GAMBAR_DIR`, default `~/.openclaw/workspace/konten-threads/gambar`,
+so the daily `hapus-gambar` workflow clears photos too. The photo is used
+only in a free design (`render_html`), which checks every `file:`/absolute
+reference sits in that folder with a sidecar and that the `kredit` text is
+visible (tags stripped, case- and whitespace-insensitive). People: public
+figures only, neutral context, no children; no photos from news sites,
+Instagram, Google Images or restaurant sites.
 
 **Accounts**: several Threads accounts, one approver (the owner), one voice.
 `utama` uses `THREADS_USER_ID` / `THREADS_ACCESS_TOKEN` / `THREADS_HANDLE`;
@@ -211,7 +231,9 @@ from the env (names and handles only); `--cek` / `--refresh-token` take
   one-shot `--at` jobs take UTC (WIB − 7 h). Queue dates are WIB dates.
 - **Facts need sources**: every option carries `sumber` URLs; the agent
   must not invent facts, numbers or quotes. No SARA, partisan politics,
-  hoaxes, other people's personal data, or real people's photos in visuals.
+  hoaxes, or other people's personal data. Real people in visuals: only
+  public figures via `foto.py` (free license, credit shown), never private
+  people or children.
 - **No fictional anecdotes** (both accounts, since SKILL 1.13.0): never
   invent first-person events ("tadi sore saya beli mendoan…", "anak saya
   tadi…"). Opinions are fine; personal stories only if the owner told them.

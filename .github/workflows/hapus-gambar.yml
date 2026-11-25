@@ -31,8 +31,22 @@ jobs:
             echo "Folder $GAMBAR belum ada, tidak ada yang dihapus."
             exit 0
           fi
-          JUMLAH=$(find "$GAMBAR" -mindepth 1 -type f | wc -l)
+          # List first (log + run summary), so there is a record of what went.
+          DAFTAR="$RUNNER_TEMP/daftar-gambar.txt"
+          find "$GAMBAR" -mindepth 1 -type f -printf '%TY-%Tm-%Td %TH:%TM  %8s  %P\n' | sort > "$DAFTAR"
+          JUMLAH=$(wc -l < "$DAFTAR")
+          echo "Akan dihapus ($JUMLAH file; waktu ubah, ukuran byte, nama):"
+          cat "$DAFTAR"
+          {
+            echo "### Gambar dihapus"
+            echo "$JUMLAH file dari \`$GAMBAR\`."
+            if [ "$JUMLAH" -gt 0 ]; then
+              echo
+              echo '```'
+              echo "Waktu ubah          Ukuran  Nama"
+              cat "$DAFTAR"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
           find "$GAMBAR" -mindepth 1 -delete
           echo "Dihapus: $JUMLAH file dari $GAMBAR"
-          echo "### Gambar dihapus" >> "$GITHUB_STEP_SUMMARY"
-          echo "$JUMLAH file dari \`$GAMBAR\`." >> "$GITHUB_STEP_SUMMARY"
