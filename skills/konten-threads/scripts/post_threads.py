@@ -10,7 +10,8 @@
 Beberapa akun: akun `utama` memakai THREADS_USER_ID / THREADS_ACCESS_TOKEN / THREADS_HANDLE;
 akun lain, mis. `bisnis`, memakai nama yang sama berakhiran _BISNIS. Slot di antrian mencatat
 akunnya, jadi --slot selalu memposting ke akun yang benar. Slot terjadwal milik akun
-tertentu (antrian.JADWAL: jam08 … jam20 = bisnis, u09/u12/u19 = utama).
+tertentu (antrian.JADWAL: jam08 … jam20 = bisnis, u… = utama).
+Postingan pertama tanpa gambar: `polling` di opsi → poll_attachment; URL di teks → link_attachment.
 
 Env: THREADS_USER_ID[_AKUN], THREADS_ACCESS_TOKEN[_AKUN], IMGBB_API_KEY (untuk hosting gambar)
 Kode keluar: 0 sukses, 2 belum disetujui/sudah diposting/dilewati, 1 error.
@@ -107,13 +108,16 @@ def tunggu_siap(cid: str, maks=60):
     raise RuntimeError(f"Container {cid} belum siap setelah {maks} detik")
 
 
-def posting(teks, gambar_url=None, reply_to=None, tag=None, tautan=None):
+def posting(teks, gambar_url=None, reply_to=None, tag=None, tautan=None, polling=None):
     data = {"text": teks, "access_token": token()}
     if gambar_url:
         data.update(media_type="IMAGE", image_url=gambar_url)
     else:
         data["media_type"] = "TEXT"
-        if tautan:
+        if polling:  # 2–4 pilihan → option_a … option_d (hanya untuk postingan teks)
+            data["poll_attachment"] = json.dumps(
+                {f"option_{'abcd'[i]}": p for i, p in enumerate(polling)}, ensure_ascii=False)
+        elif tautan:
             data["link_attachment"] = tautan  # kartu pratinjau tautan (hanya untuk postingan teks)
     if reply_to:
         data["reply_to_id"] = reply_to
@@ -146,7 +150,8 @@ def jalankan(slot, tanggal, dry):
     posts, tag, gbr = o["posts"], o.get("tag") or None, o.get("gambar")
 
     if dry:
-        print(f"[DRY-RUN] slot {slot} → {handle()} ({AKUN}), opsi {s['disetujui']}, tag={tag}, gambar={gbr}")
+        print(f"[DRY-RUN] slot {slot} → {handle()} ({AKUN}), opsi {s['disetujui']}, tag={tag}, gambar={gbr}"
+              + (f", polling={o['polling']}" if o.get("polling") else ""))
         for i, t in enumerate(posts, 1):
             print(f"--- [{i}/{len(posts)}] ({antrian.panjang_threads(t)} karakter)\n{t}")
         return
@@ -157,7 +162,8 @@ def jalankan(slot, tanggal, dry):
         url_teks = re.search(r"https?://[^\s)\]>\"']+", t) if i == 0 and not url_gbr else None
         pid = posting(t, gambar_url=url_gbr if i == 0 else None,
                       reply_to=induk, tag=tag if i == 0 else None,
-                      tautan=url_teks.group(0).rstrip(".,;:!?") if url_teks else None)
+                      tautan=url_teks.group(0).rstrip(".,;:!?") if url_teks else None,
+                      polling=o.get("polling") if i == 0 else None)
         ids.append(pid)
         induk = pid  # balasan berantai: tiap postingan membalas postingan sebelumnya
         if i < len(posts) - 1:
@@ -207,7 +213,7 @@ def main():
             if not akun:
                 print("Belum ada akun: isi THREADS_ACCESS_TOKEN di ~/.openclaw/.env")
             for nama in akun:
-                jam = ", ".join(j for j in antrian.JADWAL.get(nama, {}).values())
+                jam = ", ".join(sorted(set(antrian.JADWAL.get(nama, {}).values())))
                 print(f"{nama}\t{handle(nama)}" + (f"\t(terjadwal {jam})" if jam else ""))
             for nama in antrian.JADWAL:
                 if nama not in akun:

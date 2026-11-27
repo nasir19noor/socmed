@@ -77,27 +77,39 @@ re-run after every update.
    accounts have **no proposals** — see mode 6. `bisnis` (@lantip.ai.id,
    technology; business only as the business side of tech) posts `jam08` …
    `jam20` every 2 h, **one rubric per slot**; `utama` (@nasir19noor,
-   tech/parenting/culinary) posts `u09`/`u12`/`u19`. Schedules, themes and
-   rubrics live in `antrian.JADWAL` / `TEMA` / `RUBRIK` (`antrian jadwal`
-   prints them). `RUBRIK[slot]` holds `nama`, `format` (panjang = 4–7-post
+   personal & general knowledge) posts 5 daily slots `u09` `u1230` `u15`
+   `u17` `u1930` plus one weekly slot per day (`usen` Mon 10:30, `usel`
+   Tue 10:30, `urab` Wed 10:30, `ukam` Thu 10:20, `ujum` Fri 09:40, `usab`
+   Sat 09:23, `umin` Sun 09:47 — odd minutes are the owner's choice).
+   Weekly slots carry a cron day in `antrian.HARI` (0 = Sunday);
+   `slot_aktif()` hides them from `status` on other days and `simpan`
+   refuses them off-day. Schedules, themes and rubrics live in
+   `antrian.JADWAL` / `HARI` / `TEMA` / `RUBRIK` (`antrian jadwal` prints
+   them). `RUBRIK[slot]` holds `nama`, `format` (panjang = 4–7-post
    thread, pendek = one post; `SLOT_PANJANG` is derived from it), `visual`
-   (`bebas` / `foto` / `foto-tokoh` / `tanpa`), `wajib` and `ingat` (days
-   of topic memory). bisnis: jam08 Deep Dive (long), jam10 Kisah Fiktif
+   (`bebas` / `foto` / `foto-tokoh` / `ilustrasi` / `tanpa`), `wajib`,
+   `ingat` (days of topic memory) and optional `boleh_pendek` (a long slot
+   may be saved as one post when there is little material — the owner's
+   rule for utama; a 1-post option with no `format` is inferred pendek). bisnis: jam08 Deep Dive (long), jam10 Kisah Fiktif
    (long), jam12 Fun Fact (photo bg), jam14 Kutipan Tokoh (figure photo bg),
    jam16 Kisah Nyata (long, photo), jam18 Tips & Trik (photo if relevant),
    jam20 Berita (no image, news URL). `antrian simpan` enforces `wajib`:
    `fiktif` = post 1 contains "fiktif" (the disclosure), `tautan` = post 1
-   has a URL, `sumber` = a source URL; visual `tanpa` rejects `gambar`, and
+   has a URL, `sumber` = a source URL, `polling` = 2–4 options ≤ 25 chars
+   (`polling` on any other rubric is rejected); visual `tanpa` rejects `gambar`, and
    a scheduled slot's format must match. `antrian rubrik --slot S` prints
    the rubric plus that slot's topics for `ingat` days and today's other
    slots — Mode 6 reads it first.
 2. **Owner replies** — `OK n`, `revisi n: …`, `ganti topik`, `skip`,
    `status`, `contoh: …`, free requests ("buatkan konten …", "analisa …").
-3. **Posting** — one cron per slot (bisnis every 2 h 08.00–20.00,
-   utama 09.00/12.00/19.00): `jalankan post_threads --slot <slot>`; posts
+3. **Posting** — one cron per slot (bisnis every 2 h 08.00–20.00, utama
+   per `JADWAL`/`HARI`): `jalankan post_threads --slot <slot>`; posts
    only an approved option (auto slots are approved on save). Before it
    goes live the owner can `skip 14`, `revisi 14 1: …`, `ganti topik 14`
-   (`u12` etc. for utama; a bare `12` is always bisnis).
+   (utama uses the slot name: `u1230`, `ujum`, …; a bare `12` is always
+   bisnis). A text-only first post gets `poll_attachment` from the
+   option's `polling` (option_a…d, JSON string), otherwise
+   `link_attachment` from its first URL.
 4. **Manual trigger** — a message starting with `threads` from the owner: a
    one-message wizard (topic, format, image, when), 2 options in slot
    `manualN`, posted immediately or by a one-shot cron (`--at`, UTC).
@@ -115,11 +127,12 @@ re-run after every update.
    content rules apply (SKILL.md Mode 6), since nobody reviews before it
    goes live.
 
-**Cron** (`cron-setup.sh`): 21 jobs, each slot a "buat" + "posting" pair
-plus the weekly report. Slots, times and formats come from `python3
+**Cron** (`cron-setup.sh`): 39 jobs (19 slots × "buat" + "posting", plus
+the weekly report). Slots, times, days and formats come from `python3
 skills/konten-threads/scripts/antrian.py cron-tabel` (one line per slot:
-akun slot menit_buat jam_buat jam_posting format), read **before** any
-reset deletes jobs; the script aborts unless it gets 10 lines. Changing a
+akun slot menit_buat jam_buat menit_posting jam_posting hari format;
+hari `*` or 0–6), read **before** any reset deletes jobs; the script
+aborts unless every line has 8 fields, and the job count is derived. Changing a
 slot's format moves its "buat" time, so it needs a cron reset. `bash cron-setup.sh reset` removes every job whose
 name starts with `Threads ` (`openclaw cron list --all --json` →
 `openclaw cron remove <id>`; the JSON shape is undocumented, so the parser

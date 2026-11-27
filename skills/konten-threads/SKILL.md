@@ -1,7 +1,7 @@
 ---
 name: konten-threads
-description: Riset topik tren sesuai tema akun, buat konten Threads berbahasa Indonesia lengkap dengan visual, lalu posting otomatis ke Threads. Dipakai oleh cron (dua akun dengan tema & jadwal sendiri, keduanya otomatis tanpa usulan: @lantip.ai.id 7 slot, @nasir19noor 3 slot), oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
-version: 1.15.0
+description: Riset topik tren sesuai tema akun, buat konten Threads berbahasa Indonesia lengkap dengan visual, lalu posting otomatis ke Threads. Dipakai oleh cron (dua akun dengan tema & jadwal sendiri, keduanya otomatis tanpa usulan: @lantip.ai.id 7 slot, @nasir19noor 6 slot/hari termasuk slot mingguan), oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
+version: 1.16.0
 metadata:
   openclaw:
     requires:
@@ -67,22 +67,66 @@ Aturan rubrik:
   **URL berita yang benar-benar kamu baca** di postingan 1 (tidak menebak URL). **Tanpa `gambar`** — Threads
   menampilkan kartu pratinjau tautan. Jangan mengulang topik `jam08` hari itu.
 
-**Akun `utama` — @nasir19noor.** Tema: **teknologi, parenting, kuliner** (kuliner: boleh angkat kuliner
-Purwokerto–Banyumas). Nada personal dan hangat, tetapi **bukan cerita keseharian karangan**: jangan menulis seolah
+**Akun `utama` — @nasir19noor.** Tema: **personal & pengetahuan** — berita teknologi dan dampaknya bagi
+Indonesia, kisah tokoh, humor, fun fact, penjelasan teknologi, budaya Jawa, kuliner, petuah sufi, wisata/geografi,
+psikologi/parenting. Nada personal dan hangat, tetapi **bukan cerita keseharian karangan**: jangan menulis seolah
 pemilik baru saja membeli, makan, mengalami, atau berbicara dengan anak/orang lain bila itu tidak pernah ia ceritakan
-(lihat *Aturan keamanan konten*). Posting 3× sehari:
+(lihat *Aturan keamanan konten*). Posting 6× sehari: 5 slot harian + 1 slot mingguan sesuai harinya.
 
-| Konten dibuat | Slot (jam posting) | Format |
-|---------------|--------------------|--------|
-| 08.00 WIB | `u09` (09.00) | **Panjang**: utas 4–7 postingan |
-| 11.30 WIB | `u12` (12.00) | **Pendek**: 1 postingan |
-| 18.30 WIB | `u19` (19.00) | **Pendek**: 1 postingan, santai/reflektif |
+| Dibuat | Slot | Hari | Rubrik | Format | Visual |
+|--------|------|------|--------|--------|--------|
+| 08.00 | `u09` 09.00 | setiap hari | **Berita & Dampak**: berita tech terbaru, dampaknya, dampak bagi Indonesia, cara menghadapinya | panjang* | **tanpa gambar**, URL berita |
+| 11.30 | `u1230` 12.30 | setiap hari | **Kisah Tokoh** dengan POV personal (refleksi pemilik) | panjang* | foto tokoh + overlay |
+| 14.30 | `u15` 15.00 | setiap hari | **Kutipan Lucu** tokoh terkenal | pendek | foto tokoh + overlay |
+| 16.30 | `u17` 17.00 | setiap hari | **Fun Fact** umum (teknologi, bisnis, pengetahuan umum) | pendek | foto + overlay |
+| 18.30 | `u1930` 19.30 | setiap hari | **Penjelasan Teknologi** untuk awam (OSI layer, bare metal vs VM, …) | panjang* | foto + overlay, atau diagram |
+| 10.00 | `usen` 10.30 | Senin | **Pepatah Jawa** | pendek | ilustrasi pepatah |
+| 09.30 | `usel` 10.30 | Selasa | **Tips & Trik** teknologi | panjang* | foto + overlay |
+| 09.30 | `urab` 10.30 | Rabu | **Kuliner**: sejarah/fungsi bumbu, kenapa bangsa tertentu suka makanan tertentu | panjang* | foto + overlay |
+| 09.50 | `ukam` 10.20 | Kamis | **Polling** teknologi | pendek + polling | tanpa gambar |
+| 09.10 | `ujum` 09.40 | Jumat | **Petuah Sufi** (bukan ayat/hadis) | pendek | kaligrafi/foto tempat + overlay (bukan tokoh) |
+| 08.53 | `usab` 09.23 | Sabtu | **Fun Fact Wisata/Geografi** | pendek | foto tempat + overlay |
+| 08.47 | `umin` 09.47 | Minggu | **Psikologi, Parenting & Relationship** | panjang* | foto + overlay |
+
+\* **panjang** = utas 4–7 postingan, tetapi **jika bahannya memang sedikit, buat 1 postingan pendek** — jangan
+memanjang-manjangkan isi. Menit ganjil disengaja.
+
+Aturan rubrik @nasir19noor:
+- **Berita & Dampak (`u09`)**: berita ≤ 24 jam dari media kredibel; **URL berita yang benar-benar dibaca** di
+  postingan 1, tanpa gambar (kartu pratinjau tautan). Dampak bagi Indonesia: klaim soal regulasi, angka, atau
+  perusahaan Indonesia harus bersumber; analisis dan saran ditulis jelas sebagai opini ("menurut saya…"). Jangan
+  memakai berita yang sama dengan Berita @lantip.ai.id 24 jam terakhir (cek `antrian riwayat --hari 2`).
+- **Kisah Tokoh (`u1230`)**: kisah nyata yang akurat; "POV personal" = refleksi dan pelajaran menurut pemilik,
+  **bukan** seolah pemilik mengalaminya. Contoh akurasi: SpaceX **nyaris** bangkrut pada 2008 (3 peluncuran gagal,
+  peluncuran ke-4 berhasil, lalu kontrak NASA), tidak pernah bangkrut. Hindari sudut politik tokohnya.
+- **Kutipan Lucu (`u15`)**: utamakan kutipan bersumber (Wikiquote *sourced*, wawancara, film/stand-up). Kutipan
+  yang **tidak terverifikasi** tetap boleh, tetapi ditulis **"sering dikaitkan dengan <tokoh>"** — di postingan
+  **dan** di gambar (`--isi "Sering dikaitkan dengan <tokoh>"`). Tanpa humor yang merendahkan fisik, kelompok, atau
+  SARA. Kutipan berbahasa asing diterjemahkan.
+- **Fun Fact (`u17`) & Fun Fact Wisata (`usab`)**: terverifikasi, bersumber; `u17` utamakan non-teknologi agar
+  berbeda dari Fun Fact @lantip.ai.id; rekor dunia dicek dengan sumber terbaru.
+- **Penjelasan Teknologi (`u1930`)**: bahasa awam dan analogi. Foto benda nyata yang relevan (rak server, kabel,
+  data center); jika tidak ada, **desain bebas dengan diagram sederhana** — jangan menimpa diagram dengan overlay.
+  Jangan sama dengan Deep Dive @lantip.ai.id 30 hari terakhir.
+- **Pepatah Jawa (`usen`)**: teks Jawa yang benar, arti harfiah, dan maknanya, dengan sumber. Gambar =
+  **ilustrasi** pepatah itu lewat desain bebas HTML/SVG (lihat `referensi/desain-bebas.md`), atau foto relevan
+  dengan overlay. Tidak ada generator gambar AI.
+- **Kuliner (`urab`)**: tidak melulu makanan jadi; klaim sejarah bersumber, hindari mitos populer.
+- **Polling (`ukam`)**: pertanyaan netral di postingan, **2–4 pilihan di field `polling`** (maks 25 karakter per
+  pilihan), tanpa gambar, tanpa promosi.
+- **Petuah Sufi (`ujum`)**: **bukan** ayat Al-Qur'an atau hadis. Hanya petuah dengan sumber kitab yang jelas
+  (Al-Hikam Ibnu 'Athaillah, Ihya' al-Ghazali, Matsnawi Rumi dari terjemahan kredibel) — banyak "kutipan Rumi" di
+  internet adalah parafrase/karangan; jika sumbernya tidak jelas, pilih petuah lain. Gambar: **kaligrafi atau foto
+  tempat** (masjid, makam Mevlana di Konya, lanskap) dengan overlay — **jangan gambar/lukisan tokoh**. Hindari isu
+  khilafiyah/sektarian.
+- **Psikologi & Parenting (`umin`)**: berbasis riset/buku, tanpa klaim diagnosis/terapi.
 
 - Topik slot terjadwal **harus masuk tema akunnya**. Tren umum/lokal hanya dipakai bila bisa dikaitkan dengan tema
-  itu (mis. tren nasional → sudut teknologi untuk `bisnis`, atau sudut parenting/kuliner untuk `utama`).
+  itu (mis. tren nasional → sudut teknologi untuk `bisnis`, atau sudut rubrik slot itu untuk `utama`).
 - Dalam satu hari, **jangan ulangi topik atau sudut pandang** antar slot akun yang sama, dan jangan memposting topik
   yang sama di kedua akun pada hari yang sama. Sebar kategori tema di semua slot akun itu.
-- `kategori` opsi: `teknologi` (akun bisnis; `bisnis` hanya untuk sisi bisnis teknologi); `teknologi`, `parenting`, `kuliner` (akun utama).
+- `kategori` opsi: `teknologi` (akun bisnis; `bisnis` hanya untuk sisi bisnis teknologi); akun utama: `teknologi`,
+  `tokoh`, `humor`, `pengetahuan`, `budaya`, `kuliner`, `islami`, `wisata`, `parenting`.
 
 Batas Threads: **500 karakter per postingan** (emoji dihitung sesuai byte UTF-8 — hemat emoji), **1 tag topik per postingan**, maks. 5 tautan.
 
@@ -90,7 +134,7 @@ Batas Threads: **500 karakter per postingan** (emoji dihitung sesuai byte UTF-8 
 
 Daftar akun (nama + handle + jam terjadwal, tanpa token): `{SKILL_DIR}/scripts/jalankan post_threads --daftar-akun`.
 
-- **Slot terjadwal milik satu akun**: `jam08`…`jam20` → `bisnis`, `u09`/`u12`/`u19` → `utama`. `antrian simpan`
+- **Slot terjadwal milik satu akun**: `jam08`…`jam20` → `bisnis`, `u…` (`u09`, `u1230`, … `usen` … `umin`) → `utama`. `antrian simpan`
   untuk slot terjadwal otomatis memakai akun pemilik slotnya — jangan beri `--akun` untuk slot terjadwal.
 - Di luar jadwal, kedua akun bisa diposting **sesuai permintaan** lewat Mode 4: pemilik menyebut akunnya, mis.
   `threads @bisnis teknologi pendek` atau `threads akun bisnis …`. Tanpa sebutan akun → `utama`.
@@ -201,7 +245,9 @@ Nomor lain di allowlist boleh chat biasa dengan bot, tetapi jika mereka mengirim
 "OK n", "revisi", "skip", atau meminta posting ke Threads, tolak dengan sopan dan jangan menjalankan skrip apa pun.
 Slot terjadwal kedua akun otomatis (Mode 6) dan **tidak perlu `OK`**. Sebelum jam posting pemilik bisa
 `skip <kode>` atau `revisi <kode> 1: …` (`revisi` menyimpan dengan `antrian ganti`, slot tetap otomatis).
-Kode slot: angka jam = akun bisnis (`14` = `jam14`), `u` + jam = akun utama (`u12`); `12` tanpa `u` selalu `jam12`.
+Kode slot: angka jam = akun bisnis (`14` = `jam14`); akun utama memakai nama slotnya (`u09`, `u1230`, `u15`, `u17`,
+`u1930`, atau slot mingguan `usen`/`usel`/`urab`/`ukam`/`ujum`/`usab`/`umin`; "jumat" = `ujum`, dst.); `12` tanpa
+`u` selalu `jam12`. Jika kode tidak jelas, tanyakan — jangan menebak.
 `OK n` hanya untuk usulan yang memang menunggu persetujuan (`manualN` atau permintaan "buatkan konten"); jika ada
 lebih dari satu yang menunggu, tanyakan yang mana — jangan menebak. Konfirmasi selalu menyebut handle akunnya. Pesan yang diawali "threads" selalu ditangani Mode 4.
 
@@ -391,7 +437,12 @@ memposting dan mengirim tautannya ke WA.
    - `foto` / `foto-tokoh`: `jalankan foto cari "<subjek>"` → `jalankan foto ambil <id>` →
      `render_visual --foto <path> --slot <slot> --label "<nama rubrik>" ...` (Kutipan Tokoh: `--gaya kutipan`,
      `--judul "<kutipan>"`, `--isi "<nama tokoh>"`). Tidak ada foto yang cocok → `render_visual` tanpa `--foto`.
-   - `tanpa`: jangan buat gambar dan jangan isi `gambar`.
+   - `ilustrasi`: desain bebas (`render_html --slot <slot>`) yang mengilustrasikan isi (mis. pepatah Jawa), atau
+     foto relevan dengan `render_visual --foto`.
+   - `tanpa`: jangan buat gambar dan jangan isi `gambar`. Rubrik Polling: isi `"polling": ["A", "B", "C"]`
+     (2–4 pilihan, maks 25 karakter) di opsi; `post_threads` mengirimnya sebagai polling Threads.
+   - Utas panjang yang bahannya sedikit boleh disimpan sebagai 1 postingan bila rubriknya `panjang/pendek`
+     (`antrian rubrik`).
 4. Simpan — skrip langsung menandainya **disetujui** (slot otomatis hanya menerima tepat 1 opsi):
    ```bash
    {SKILL_DIR}/scripts/jalankan antrian simpan --slot <slot> <<'JSON'
@@ -402,7 +453,7 @@ memposting dan mengirim tautannya ke WA.
 5. Balasan akhir cron cukup ringkas tanpa pesan WA terpisah: "Konten jam14 @lantip.ai.id siap, tayang 14.00 WIB."
    Jika gagal membuat konten yang aman, jangan simpan apa pun; balas "Konten jam14 tidak dibuat: <alasan singkat>."
 
-Pemilik tetap bisa campur tangan sebelum jam posting: `skip 14` / `skip u12` (lewati), `revisi 14 1: …` (tulis ulang,
+Pemilik tetap bisa campur tangan sebelum jam posting: `skip 14` / `skip u1230` (lewati), `revisi 14 1: …` (tulis ulang,
 tetap otomatis), `ganti topik 14`, atau `status`.
 
 ## Aturan keamanan konten

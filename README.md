@@ -7,12 +7,14 @@ Kedua akun posting OTOMATIS, tanpa usulan:
 @lantip.ai.id (bisnis) — tema teknologi (bisnis hanya sebagai sisi bisnis teknologi), satu rubrik per slot
   08.00 Deep Dive · 10.00 Kisah Fiktif · 12.00 Fun Fact · 14.00 Kutipan Tokoh
   16.00 Kisah Nyata · 18.00 Tips & Trik · 20.00 Berita
-@nasir19noor (utama) — tema teknologi, parenting, kuliner
-  posting 09.00 (utas panjang) 12.00 19.00 WIB
+@nasir19noor (utama) — personal & pengetahuan, 5 rubrik harian + 1 rubrik mingguan
+  09.00 Berita & Dampak · 12.30 Kisah Tokoh · 15.00 Kutipan Lucu · 17.00 Fun Fact · 19.30 Penjelasan Teknologi
+  Sen 10.30 Pepatah Jawa · Sel 10.30 Tips & Trik · Rab 10.30 Kuliner · Kam 10.20 Polling
+  Jum 09.40 Petuah Sufi · Sab 09.23 Fun Fact Wisata · Min 09.47 Psikologi & Parenting
 
 60/30 mnt sebelum slot cron "buat"    → baca rubrik → riset → 1 konten + visual → langsung disetujui (tanpa WA)
 jam slot               cron "posting" → diposting ke akun slotnya → tautan ke WA
-Sebelum tayang Anda bisa "skip 14" / "revisi u12 1: ..." / "ganti topik 16" (dari nomor pemilik)
+Sebelum tayang Anda bisa "skip 14" / "revisi u1230 1: ..." / "ganti topik 16" (dari nomor pemilik)
 Minggu 21.00 WIB       cron "laporan" → laporan mingguan per akun (engagement, reply, follower, saran) → WA
                                       → disimpan sebagai acuan konten berikutnya
 Kapan saja: kirim "threads" dari nomor pemilik → bot bertanya topik, format, gambar, waktu → usulan → OK → posting
@@ -153,8 +155,8 @@ Bot lalu mengirim 2 opsi. Balas `OK 1` untuk menyetujui, dan konten akan diposti
 
 | Ketik | Hasil |
 |---|---|
-| `skip 10` / `skip u19` | slot itu dilewati hari ini (sebelum jam posting) |
-| `revisi 14 1: lebih santai` / `revisi u12 1: …` | konten otomatis slot itu ditulis ulang sebelum tayang |
+| `skip 10` / `skip u1930` | slot itu dilewati hari ini (sebelum jam posting) |
+| `revisi 14 1: lebih santai` / `revisi u1230 1: …` | konten otomatis slot itu ditulis ulang sebelum tayang |
 | `ganti topik 16` | konten slot 16.00 dibuat ulang dengan topik lain |
 | `OK 1` / `OK 2` | hanya untuk usulan manual (`threads …` atau "buatkan konten") |
 | `status` | ringkasan hari ini, semua slot kedua akun (`[bisnis]` / `[utama]`) |
@@ -169,7 +171,7 @@ Bot lalu mengirim 2 opsi. Balas `OK 1` untuk menyetujui, dan konten akan diposti
 | Akun | Tema | Posting | Konten dibuat |
 |---|---|---|---|
 | @lantip.ai.id (`bisnis`) | teknologi (AI, cloud, DevOps, keamanan, software); bisnis hanya sebagai sisi bisnis teknologi | 7×, satu rubrik per slot (tabel di bawah) | 60 menit sebelum utas panjang, 30 menit sebelum pendek |
-| @nasir19noor (`utama`) | teknologi, parenting, kuliner | 3×: 09.00 (utas panjang), 12.00, 19.00 | 08.00, 11.30, 18.30 |
+| @nasir19noor (`utama`) | personal & pengetahuan (rubrik di bawah) | 6×: 5 slot harian + 1 slot mingguan | 60 menit sebelum utas panjang, 30 menit sebelum pendek |
 
 Rubrik @lantip.ai.id (`antrian.RUBRIK`; lihat dengan `jalankan antrian jadwal`):
 
@@ -191,26 +193,49 @@ tertentu (Fun Fact 90 hari, Kisah Nyata 180 hari, Kutipan Tokoh 30 hari, dst.). 
 Postingan teks yang memuat URL (rubrik Berita) dikirim dengan `link_attachment`, sehingga Threads menampilkan kartu
 pratinjau tautan. **Mengubah format atau jam slot perlu reset cron** (jam pembuatan ikut bergeser).
 
+Rubrik @nasir19noor (sejak skill 1.16.0). *Panjang\** = utas panjang, tetapi bila bahannya memang sedikit, Claude
+membuat 1 postingan pendek. Menit ganjil disengaja.
+
+| Hari | Jam | Slot | Rubrik | Format | Gambar |
+|---|---|---|---|---|---|
+| setiap hari | 09.00 | `u09` | Berita & Dampak: berita tech terbaru, dampaknya, dampak bagi Indonesia, cara menghadapinya | panjang\* | tanpa gambar, URL berita |
+| setiap hari | 12.30 | `u1230` | Kisah Tokoh dengan POV personal (refleksi, bukan pengalaman karangan) | panjang\* | foto tokoh + overlay |
+| setiap hari | 15.00 | `u15` | Kutipan Lucu (yang tidak terverifikasi ditulis "sering dikaitkan dengan …") | pendek | foto tokoh + overlay |
+| setiap hari | 17.00 | `u17` | Fun Fact umum | pendek | foto + overlay |
+| setiap hari | 19.30 | `u1930` | Penjelasan Teknologi untuk awam | panjang\* | foto + overlay, atau diagram |
+| Senin | 10.30 | `usen` | Pepatah Jawa | pendek | ilustrasi pepatah (desain HTML/SVG) |
+| Selasa | 10.30 | `usel` | Tips & Trik teknologi | panjang\* | foto + overlay |
+| Rabu | 10.30 | `urab` | Kuliner (sejarah/fungsi bumbu, dsb.) | panjang\* | foto + overlay |
+| Kamis | 10.20 | `ukam` | Polling teknologi (2–4 pilihan) | pendek | tanpa gambar |
+| Jumat | 09.40 | `ujum` | Petuah Sufi (bukan ayat/hadis, sumber kitab jelas) | pendek | kaligrafi/foto tempat + overlay, bukan tokoh |
+| Sabtu | 09.23 | `usab` | Fun Fact Wisata/Geografi | pendek | foto tempat + overlay |
+| Minggu | 09.47 | `umin` | Psikologi, Parenting & Relationship | panjang\* | foto + overlay |
+
+Rubrik Polling dikirim sebagai polling Threads (`poll_attachment`, field `polling` di antrian). Slot mingguan hanya
+bisa disimpan dan tampil di `status` pada harinya. Kode slot untuk perintah WA memakai nama slotnya (`skip u1230`,
+`revisi ujum 1: …`).
+
 **Tanpa usulan.** Untuk tiap slot ada dua cron job: **"Threads buat <slot>"** 60 menit (utas panjang) atau 30 menit
 (pendek) sebelum jam posting membuat satu konten sesuai tema akun dan rubrik slotnya (riset, tulisan, gambar) dan menyimpannya sebagai sudah disetujui, tanpa pesan WA;
 **"Threads posting <slot>"** di jam slotnya memposting dan mengirim tautannya ke WA, jadi Anda bisa memeriksa dan
 menghapusnya di aplikasi Threads bila perlu. Sebelum tayang Anda masih bisa `skip 14`, `revisi 14 1: …`,
-`ganti topik 14`, atau `status` (`u12` dst. untuk @nasir19noor). Karena tidak diperiksa dulu, konten otomatis
+`ganti topik 14`, atau `status` (`u1230`, `ujum`, dst. untuk @nasir19noor). Karena tidak diperiksa dulu, konten otomatis
 menghindari topik sensitif (duka, politik, SARA, kesehatan berisiko, isu hukum, saran investasi) dan memilih topik
 evergreen bila kabar terbaru belum pasti. Konten juga **tidak mengarang pengalaman pribadi** (mis. "sore ini saya
 beli mendoan…", "anak saya tadi…"); sudutnya fakta, tips, opini, atau pertanyaan ke pembaca. Cerita pribadi hanya
 dipakai bila Anda sendiri yang menceritakannya. Satu-satunya fiksi: rubrik Kisah Fiktif @lantip.ai.id, yang
 selalu diakui fiktif, memakai orang ketiga dengan nama karangan, dan tidak menyebut orang/perusahaan nyata.
 
-Jadwal dan tema ada di `antrian.py` (`JADWAL`, `TEMA`, `OTOMATIS`, `jam_buat`; cek dengan `jalankan antrian jadwal`)
-dan harus sama dengan `cron-setup.sh`. Slot akun utama bernama `u09`, `u12`, `u19` (jam 12.00 dipakai kedua akun).
+Jadwal, tema, dan rubrik ada di `antrian.py` (`JADWAL`, `HARI`, `TEMA`, `RUBRIK`, `OTOMATIS`, `jam_buat`; cek dengan
+`jalankan antrian jadwal`); `cron-setup.sh` membacanya lewat `antrian.py cron-tabel`. Slot akun utama: harian `u09`,
+`u1230`, `u15`, `u17`, `u1930`; mingguan `usen`, `usel`, `urab`, `ukam`, `ujum`, `usab`, `umin`.
 `THREADS_AKUN_JADWAL` di `.env` tidak dipakai lagi (boleh dihapus).
 
 ### Hapus semua cron job Threads dan daftarkan ulang
 
 Dipakai saat pindah versi, atau bila daftar job di server tidak lagi cocok dengan repo (mis. job buatan tangan).
-Job yang namanya diawali **"Threads "** dihapus semua, lalu 21 job didaftarkan ulang: bisnis 7 buat + 7 posting,
-utama 3 buat + 3 posting, laporan mingguan 1. Job bawaan OpenClaw (Heartbeat, memory) tidak disentuh.
+Job yang namanya diawali **"Threads "** dihapus semua, lalu 39 job didaftarkan ulang: bisnis 7 buat + 7 posting,
+utama 12 buat + 12 posting (5 harian + 7 mingguan), laporan mingguan 1. Job bawaan OpenClaw (Heartbeat, memory) tidak disentuh.
 
 - **Dari GitHub:** **Actions → Deploy konten-threads → Run workflow**, centang **reset_cron**, lalu Run. Skill
   dipasang dulu, kemudian cron di-reset; ringkasannya tampil di halaman run.

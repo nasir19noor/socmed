@@ -16,8 +16,8 @@ Perintah:
 
 Slot terjadwal per akun (JADWAL), masing-masing dengan tema sendiri (TEMA) dan rubrik per slot (RUBRIK):
   bisnis (@lantip.ai.id): jam08, jam10, … jam20 — tiap 2 jam 08.00–20.00 WIB, tiap slot satu rubrik
-  utama  (@nasir19noor):  u09, u12, u19 — 09.00, 12.00, 19.00 WIB
-Format (panjang/pendek) mengikuti RUBRIK. Slot manualN = trigger manual dari WhatsApp.
+  utama  (@nasir19noor):  harian u09, u1230, u15, u17, u1930; mingguan usen … umin (HARI, satu per hari)
+Format (panjang/pendek) mengikuti RUBRIK. Slot mingguan hanya bisa disimpan pada harinya. Slot manualN = trigger manual dari WhatsApp.
 Akun OTOMATIS (keduanya) tanpa usulan: konten dibuat sebelum jam posting (jam_buat: 60 menit untuk utas
 panjang, 30 menit untuk pendek; cron-setup.sh membacanya), disimpan dengan tepat 1 opsi, langsung disetujui.
 Akun: tiap slot mencatat akun Threads tujuannya; post_threads.py memakai akun itu. Slot terjadwal
@@ -43,19 +43,29 @@ except Exception:  # pragma: no cover
 # Jadwal posting otomatis per akun: slot -> jam (WIB).
 JADWAL = {
     "bisnis": {f"jam{j:02d}": f"{j:02d}:00" for j in range(8, 21, 2)},  # @lantip.ai.id, 7×/hari
-    "utama": {"u09": "09:00", "u12": "12:00", "u19": "19:00"},          # @nasir19noor, 3×/hari
+    # @nasir19noor: 5 slot harian + 1 slot mingguan per hari (HARI) — 6×/hari
+    "utama": {"u09": "09:00", "u1230": "12:30", "u15": "15:00", "u17": "17:00", "u1930": "19:30",
+              "usen": "10:30", "usel": "10:30", "urab": "10:30", "ukam": "10:20", "ujum": "09:40",
+              "usab": "09:23", "umin": "09:47"},
 }
+# Slot mingguan: hanya berjalan pada hari ini (angka hari cron: 0 = Minggu, 1 = Senin, … 6 = Sabtu).
+HARI = {"usen": 1, "usel": 2, "urab": 3, "ukam": 4, "ujum": 5, "usab": 6, "umin": 0}
+NAMA_HARI = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
 # Tema konten tiap akun (riset & topik usulan terjadwal mengikuti ini).
 TEMA = {
     "bisnis": "teknologi (AI, cloud, DevOps, keamanan, software); bisnis hanya sebagai sisi bisnis teknologi "
               "(startup, produk, industri teknologi), bukan bisnis umum",
-    "utama": "teknologi, parenting, kuliner",
+    "utama": "personal & pengetahuan: berita teknologi dan dampaknya bagi Indonesia, kisah tokoh, humor, fun fact, "
+             "penjelasan teknologi, budaya Jawa, kuliner, petuah sufi, wisata/geografi, psikologi/parenting",
 }
 # Rubrik tiap slot terjadwal. format: panjang = utas 4–7 postingan, pendek = 1 postingan.
+# boleh_pendek: slot panjang boleh disimpan sebagai 1 postingan bila bahannya memang sedikit.
 # visual: bebas = template atau desain bebas; foto = foto asli dari internet sebagai background
-# (jalankan foto, cadangan template); foto-tokoh = foto tokoh yang dikutip; tanpa = tanpa gambar.
+# (jalankan foto, cadangan template); foto-tokoh = foto tokoh yang dikutip; ilustrasi = desain bebas yang
+# mengilustrasikan isi (atau foto relevan); tanpa = tanpa gambar.
 # wajib: syarat yang dicek `simpan` — fiktif (postingan 1 menyebut "fiktif"), sumber (field sumber terisi),
-# tautan (postingan 1 memuat URL berita). ingat: hari ke belakang untuk cek topik berulang.
+# tautan (postingan 1 memuat URL berita), polling (field polling: 2–4 pilihan). ingat: hari ke belakang untuk
+# cek topik berulang.
 RUBRIK = {
     "jam08": {"nama": "Deep Dive", "format": "panjang", "visual": "bebas", "wajib": ["sumber"], "ingat": 30,
               "isi": "utas panjang teknologi: penjelasan mendalam satu konsep/teknologi (cara kerja, kapan dipakai, "
@@ -78,10 +88,54 @@ RUBRIK = {
     "jam20": {"nama": "Berita", "format": "pendek", "visual": "tanpa", "wajib": ["tautan", "sumber"], "ingat": 7,
               "isi": "berita teknologi ≤ 24 jam terakhir dari media kredibel: ringkas, kenapa penting, lalu URL "
                      "berita yang benar-benar dibaca. Tanpa gambar"},
-    "u09": {"nama": "", "format": "panjang", "visual": "bebas", "wajib": [], "ingat": 7, "isi": "utas panjang"},
-    "u12": {"nama": "", "format": "pendek", "visual": "bebas", "wajib": [], "ingat": 7, "isi": "pendek"},
-    "u19": {"nama": "", "format": "pendek", "visual": "bebas", "wajib": [], "ingat": 7,
-            "isi": "pendek, santai/reflektif"},
+    # @nasir19noor. boleh_pendek: utas panjang boleh jadi 1 postingan bila bahannya memang sedikit.
+    "u09": {"nama": "Berita & Dampak", "format": "panjang", "boleh_pendek": True, "visual": "tanpa",
+            "wajib": ["tautan", "sumber"], "ingat": 7,
+            "isi": "berita teknologi terbaru (≤ 24 jam): apa yang terjadi, dampaknya, apakah berdampak bagi Indonesia, "
+                   "dan bagaimana menghadapinya. Klaim soal Indonesia harus bersumber, sisanya tulis sebagai opini. "
+                   "URL berita di postingan 1, tanpa gambar. Bukan berita yang sama dengan @lantip.ai.id 24 jam "
+                   "terakhir"},
+    "u1230": {"nama": "Kisah Tokoh", "format": "panjang", "boleh_pendek": True, "visual": "foto-tokoh",
+              "wajib": ["sumber"], "ingat": 90,
+              "isi": "kisah nyata tokoh teknologi/bisnis teknologi dengan POV personal = refleksi & opini pemilik "
+                     "('yang saya pelajari…'), bukan pengalaman karangan. Akurat (mis. SpaceX nyaris bangkrut 2008, "
+                     "tidak pernah bangkrut). Hindari sudut politik tokohnya"},
+    "u15": {"nama": "Kutipan Lucu", "format": "pendek", "visual": "foto-tokoh", "wajib": ["sumber"], "ingat": 60,
+            "isi": "kutipan lucu tokoh terkenal + terjemahan/makna singkat. Kutipan yang tidak terverifikasi ditulis "
+                   "'sering dikaitkan dengan <tokoh>' (di postingan DAN di gambar). Tanpa humor yang merendahkan "
+                   "fisik, kelompok, atau SARA"},
+    "u17": {"nama": "Fun Fact", "format": "pendek", "visual": "foto", "wajib": ["sumber"], "ingat": 90,
+            "isi": "fun fact umum (teknologi, bisnis, pengetahuan umum, sains, sejarah) yang terverifikasi; utamakan "
+                   "non-teknologi agar tidak sama dengan Fun Fact @lantip.ai.id"},
+    "u1930": {"nama": "Penjelasan Teknologi", "format": "panjang", "boleh_pendek": True, "visual": "foto",
+              "wajib": ["sumber"], "ingat": 60,
+              "isi": "penjelasan teknologi untuk orang awam dengan analogi (mis. cara kerja OSI layer, beda bare metal "
+                     "dan VM). Foto benda nyata yang relevan (rak server, kabel, data center) dengan overlay; jika "
+                     "tidak ada, desain bebas berisi diagram sederhana. Bukan topik Deep Dive @lantip.ai.id 30 hari"},
+    "usen": {"nama": "Pepatah Jawa", "format": "pendek", "visual": "ilustrasi", "wajib": ["sumber"], "ingat": 180,
+             "isi": "satu pepatah/paribasan Jawa: teks Jawa yang benar, arti harfiah, dan maknanya untuk hari ini. "
+                    "Gambar = ilustrasi pepatah itu (desain bebas HTML/SVG) atau foto relevan dengan overlay"},
+    "usel": {"nama": "Tips & Trik", "format": "panjang", "boleh_pendek": True, "visual": "foto", "wajib": [],
+             "ingat": 60, "isi": "tips & trik teknologi untuk pengguna umum, langsung bisa dicoba; bukan tips yang "
+                                 "sama dengan Tips & Trik @lantip.ai.id"},
+    "urab": {"nama": "Kuliner", "format": "panjang", "boleh_pendek": True, "visual": "foto", "wajib": ["sumber"],
+             "ingat": 90, "isi": "kuliner tidak melulu makanan jadi: sejarah bumbu, fungsi bumbu, kenapa bangsa "
+                                 "tertentu suka makanan tertentu, dsb. Bersumber; hindari mitos populer"},
+    "ukam": {"nama": "Polling", "format": "pendek", "visual": "tanpa", "wajib": ["polling"], "ingat": 60,
+             "isi": "polling teknologi netral tanpa promosi (mis. LLM mana yang akan memimpin: Claude, OpenAI, "
+                    "Gemini). Pertanyaan di postingan, 2–4 pilihan di field 'polling'"},
+    "ujum": {"nama": "Petuah Sufi", "format": "pendek", "visual": "foto", "wajib": ["sumber"], "ingat": 180,
+             "isi": "petuah sufi (bukan ayat Al-Qur'an atau hadis) dari sumber kitab yang jelas (mis. Al-Hikam Ibnu "
+                    "'Athaillah, Ihya' al-Ghazali, Matsnawi Rumi terjemahan kredibel); jika sumbernya tidak jelas, "
+                    "pilih petuah lain. Gambar: kaligrafi atau foto tempat (masjid, makam Mevlana, lanskap) dengan "
+                    "overlay — BUKAN gambar tokoh. Hindari isu khilafiyah/sektarian"},
+    "usab": {"nama": "Fun Fact Wisata", "format": "pendek", "visual": "foto", "wajib": ["sumber"], "ingat": 180,
+             "isi": "fun fact wisata/geografi (negara terkecil, rekor dunia, keajaiban alam); rekor dicek dengan "
+                    "sumber terbaru. Foto tempatnya dengan overlay"},
+    "umin": {"nama": "Psikologi & Parenting", "format": "panjang", "boleh_pendek": True, "visual": "foto",
+             "wajib": ["sumber"], "ingat": 90,
+             "isi": "psikologi, parenting, atau relationship berbasis riset/buku; tanpa klaim diagnosis/terapi dan "
+                    "tanpa cerita pribadi karangan. Foto relevan dengan overlay"},
 }
 SLOT = dict(sorted(((s, j) for slot in JADWAL.values() for s, j in slot.items()), key=lambda x: x[1]))
 AKUN_SLOT = {s: a for a, slot in JADWAL.items() for s in slot}
@@ -94,8 +148,16 @@ OTOMATIS = {"utama", "bisnis"}
 def jam_buat(slot: str) -> str:
     """Jam cron pembuat konten slot otomatis: 60 menit sebelum posting untuk utas panjang (riset lebih
     lama), 30 menit untuk pendek. cron-setup.sh membaca jam ini lewat `antrian cron-tabel`."""
-    j = int(SLOT[slot][:2])
-    return f"{j - 1:02d}:00" if slot in SLOT_PANJANG else f"{j - 1:02d}:30"
+    j, m = map(int, SLOT[slot].split(":"))
+    t = j * 60 + m - (60 if slot in SLOT_PANJANG else 30)
+    return f"{t // 60:02d}:{t % 60:02d}"
+
+
+def slot_aktif(slot: str, tanggal: str) -> bool:
+    """Slot terjadwal berjalan pada tanggal ini? (slot mingguan hanya pada harinya)."""
+    if slot not in HARI:
+        return True
+    return HARI[slot] == (dt.date.fromisoformat(tanggal).weekday() + 1) % 7
 
 
 def slot_type(s: str) -> str:
@@ -168,6 +230,7 @@ def jam_slot(slot: str, s: dict = None) -> str:
         return SLOT[slot] + " WIB"
     return (s or {}).get("jadwal") or "menunggu instruksi"
 BATAS = 500
+BATAS_POLLING = 25  # panjang pilihan polling di aplikasi Threads
 DATA = Path(os.path.expanduser(os.environ.get(
     "KONTEN_DATA_DIR", "~/.openclaw/workspace/konten-threads/antrian")))
 
@@ -212,11 +275,13 @@ def validasi_opsi(o: dict, slot: str, idx: int) -> list:
     posts = o.get("posts")
     if not isinstance(posts, list) or not posts:
         return [f"opsi {idx}: 'posts' wajib berupa array tidak kosong"]
-    fmt = o.get("format") or ("panjang" if slot in SLOT_PANJANG else "pendek")
+    r = RUBRIK.get(slot, {})
+    fmt = o.get("format") or ("pendek" if r.get("boleh_pendek") and len(posts) == 1 else
+                              "panjang" if slot in SLOT_PANJANG else "pendek")
     if fmt not in ("panjang", "pendek"):
         return [f"opsi {idx}: format harus 'panjang' atau 'pendek'"]
-    if slot in RUBRIK and fmt != RUBRIK[slot]["format"]:
-        return [f"opsi {idx}: slot {slot} ({RUBRIK[slot]['nama'] or 'terjadwal'}) formatnya {RUBRIK[slot]['format']}"]
+    if r and fmt != r["format"] and not (r.get("boleh_pendek") and fmt == "pendek"):
+        return [f"opsi {idx}: slot {slot} ({r['nama'] or 'terjadwal'}) formatnya {r['format']}"]
     err += validasi_rubrik(o, slot, idx)
     o["format"] = fmt
     if fmt == "panjang" and not (2 <= len(posts) <= 10):
@@ -253,6 +318,14 @@ def validasi_rubrik(o: dict, slot: str, idx: int) -> list:
         err.append(f"opsi {idx}: rubrik {nama} — isi 'sumber' dengan URL yang dibaca")
     if r["visual"] == "tanpa" and o.get("gambar"):
         err.append(f"opsi {idx}: rubrik {nama} tanpa gambar — hapus 'gambar'")
+    if "polling" in r["wajib"]:
+        p = o.get("polling")
+        if not (isinstance(p, list) and 2 <= len(p) <= 4 and all(isinstance(x, str) and x.strip() for x in p)):
+            err.append(f"opsi {idx}: rubrik {nama} — isi 'polling' dengan 2–4 pilihan teks")
+        elif any(len(x) > BATAS_POLLING for x in p):
+            err.append(f"opsi {idx}: pilihan polling maks {BATAS_POLLING} karakter")
+    elif o.get("polling"):
+        err.append(f"opsi {idx}: 'polling' hanya untuk rubrik Polling")
     return err
 
 
@@ -272,6 +345,8 @@ def cmd_simpan(a):
         err.append("tidak ada opsi")
     if err:
         sys.exit("GAGAL VALIDASI:\n- " + "\n- ".join(err))
+    if a.slot in SLOT and not slot_aktif(a.slot, a.tanggal):
+        sys.exit(f"Slot {a.slot} hanya hari {NAMA_HARI[HARI[a.slot]]}, bukan {a.tanggal}.")
     if a.slot in SLOT:
         pemilik_slot = AKUN_SLOT[a.slot]
         if a.akun and a.akun != pemilik_slot:
@@ -359,7 +434,8 @@ def cmd_skip(a):
 def cmd_status(a):
     d = muat(a.tanggal)
     print(f"Status {d['tanggal']}:")
-    semua = list(SLOT) + sorted(k for k in d["slot"] if k not in SLOT)
+    semua = [s for s in SLOT if slot_aktif(s, d["tanggal"]) or s in d["slot"]]
+    semua += sorted(k for k in d["slot"] if k not in SLOT)
     for sl in semua:
         s = d["slot"].get(sl)
         jam = jam_slot(sl, s)
@@ -398,7 +474,8 @@ def cmd_rubrik(a):
     """Petunjuk isi slot terjadwal + topik slot itu yang sudah dipakai (agar tidak berulang)."""
     r = RUBRIK[a.slot]
     print(f"Slot {a.slot} ({SLOT[a.slot]} WIB, akun {AKUN_SLOT[a.slot]} {handle_akun(AKUN_SLOT[a.slot])})")
-    print(f"Rubrik: {r['nama'] or '-'} | format {r['format']} | visual {r['visual']} | "
+    fmt = r["format"] + (" (boleh pendek 1 postingan bila bahannya sedikit)" if r.get("boleh_pendek") else "")
+    print(f"Rubrik: {r['nama'] or '-'} | format {fmt} | visual {r['visual']} | "
           f"wajib: {', '.join(r['wajib']) or '-'}\nTema akun: {TEMA[AKUN_SLOT[a.slot]]}\nIsi: {r['isi']}")
     lama = list(baris_riwayat(r["ingat"], a.slot))
     print(f"\nTopik slot ini {r['ingat']} hari terakhir (jangan diulang):")
@@ -408,10 +485,12 @@ def cmd_rubrik(a):
 
 
 def cmd_cron_tabel(a):
-    """Untuk cron-setup.sh: akun slot menit_buat jam_buat jam_posting format, satu slot per baris."""
+    """Untuk cron-setup.sh, satu slot per baris:
+    akun slot menit_buat jam_buat menit_posting jam_posting hari(cron: * atau 0–6) format"""
     for sl, jam in SLOT.items():
         jb = jam_buat(sl)
-        print(AKUN_SLOT[sl], sl, int(jb[3:]), int(jb[:2]), int(jam[:2]), RUBRIK[sl]["format"])
+        print(AKUN_SLOT[sl], sl, int(jb[3:]), int(jb[:2]), int(jam[3:]), int(jam[:2]), HARI.get(sl, "*"),
+              RUBRIK[sl]["format"])
 
 
 def cmd_ambil(a):
@@ -437,7 +516,9 @@ def cmd_jadwal(a):
         print(f"{akun} ({handle_akun(akun)}): tema {TEMA[akun]} ({cara})")
         for s, j in slot.items():
             r = RUBRIK[s]
-            print(f"  {s} {j}  {r['nama'] or '-':<14} {r['format']:<8} visual {r['visual']:<10} "
+            hari = NAMA_HARI[HARI[s]] if s in HARI else "setiap hari"
+            fmt = r["format"] + ("/pendek" if r.get("boleh_pendek") else "")
+            print(f"  {s:<6} {hari:<11} {j}  {r['nama'] or '-':<22} {fmt:<14} visual {r['visual']:<10} "
                   f"dibuat {jam_buat(s) if akun in OTOMATIS else '-'}")
 
 
