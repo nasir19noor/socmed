@@ -11,7 +11,8 @@ Tanda *...* pada judul akan diberi warna aksen.
 Watermark (handle di kaki gambar) wajib sesuai akun yang memposting: --slot jam14 (akun dari slot),
 atau --akun bisnis / --akun utama (slot manual), atau --akun @handle.
 Gaya: --poin "a|b|c" untuk daftar; --gaya kutipan untuk kutipan besar (--isi = sumber/penulis);
---angka "73%" untuk angka besar di atas judul.
+--angka "73%" untuk angka besar di atas judul. --foto <path dari 'jalankan foto ambil'> = foto asli sebagai
+latar penuh (tata letak "foto", gradasi gelap, kredit foto otomatis di bawah).
 
 Agar tidak seragam, tata letak, pasangan font, dan varian palet dipilih otomatis: yang paling
 lama tidak dipakai (dicatat di ragam.json, lihat ragam.py). Bisa dipaksa dengan --tata-letak,
@@ -22,6 +23,7 @@ Butuh: pip install playwright && python3 -m playwright install chromium
 import argparse
 import datetime as dt
 import html
+import json
 import os
 import random
 import re
@@ -118,7 +120,9 @@ def ukuran_judul(teks: str, ada_poin: bool) -> int:
 def pilih_gaya(a) -> None:
     """Isi a.tata_letak / a.font / a.palet yang 'auto' dengan yang paling lama tidak dipakai, lalu catat."""
     acak = random.Random()
-    if a.tata_letak == "auto":
+    if a.foto:
+        a.tata_letak = "foto"  # di luar rotasi tata letak biasa
+    elif a.tata_letak == "auto":
         a.tata_letak = ragam.pilih("tata", list(TATA), acak)
     if a.font == "auto":
         a.font = ragam.pilih("font", list(FONT), acak)
@@ -126,7 +130,8 @@ def pilih_gaya(a) -> None:
     if a.palet == "auto":
         a.palet = int(ragam.pilih("palet", varian, acak).rsplit("-", 1)[1])
     a.palet = min(max(a.palet, 1), len(varian))
-    ragam.catat("tata", a.tata_letak)
+    if not a.foto:
+        ragam.catat("tata", a.tata_letak)
     ragam.catat("font", a.font)
     ragam.catat("palet", f"{a.kategori}-{a.palet}")
 
@@ -134,7 +139,7 @@ def pilih_gaya(a) -> None:
 def bangun_html(a) -> str:
     aksen, muda, dasar, tinta = PALET[a.kategori][a.palet - 1]
     f_judul, bobot, f_teks, skala_font, url_font = FONT[a.font]
-    skala_tata, font_tambahan = TATA[a.tata_letak]
+    skala_tata, font_tambahan = TATA.get(a.tata_letak, (1.0, ""))
     url = "https://fonts.googleapis.com/css2?family=" + url_font
     if font_tambahan:
         url += "&family=" + font_tambahan
@@ -147,6 +152,8 @@ def bangun_html(a) -> str:
     else:
         konten = ""
     ukuran = ukuran_judul(a.judul, bool(poin)) * skala_font * skala_tata
+    if a.foto:
+        ukuran *= 0.9  # teks di bagian bawah foto: sedikit lebih kecil agar foto tetap terlihat
     if a.angka:
         ukuran *= 0.82
     isi = TEMPLATE.read_text(encoding="utf-8")
@@ -163,6 +170,9 @@ def bangun_html(a) -> str:
         "{{GAYA}}": a.gaya,
         "{{AKUN}}": html.escape(a.handle),
         "{{TANGGAL}}": tanggal_id(dt.date.today()),
+        "{{FOTO}}": (f'<div class="foto" style="background-image:url(&quot;{html.escape(a.foto.as_uri())}&quot;)">'
+                     "</div>") if a.foto else "",
+        "{{KREDIT}}": f'<div class="kredit">{html.escape(a.kredit)}</div>' if a.foto else "",
     }
     for k, v in ganti.items():
         isi = isi.replace(k, v)
@@ -208,6 +218,16 @@ def render_chrome(html_path: Path, out: Path) -> bool:
     return False
 
 
+def foto_latar(path: str):
+    """Foto latar hanya dari `jalankan foto ambil` (berlisensi bebas); kreditnya dari <foto>.sumber.json."""
+    import foto
+    p = Path(os.path.expanduser(path)).resolve()
+    side = Path(str(p) + ".sumber.json")
+    if foto.FOTO.resolve() not in p.parents or not p.exists() or not side.exists():
+        sys.exit(f"--foto harus foto dari 'jalankan foto ambil' (di {foto.FOTO}): {path}")
+    return p, json.loads(side.read_text(encoding="utf-8"))["kredit"]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--kategori", choices=PALET.keys(), default="umum")
@@ -223,8 +243,10 @@ def main():
     ap.add_argument("--label", default="")
     ap.add_argument("--akun", default="", help="Akun yang memposting (utama/bisnis) atau @handle, untuk watermark")
     ap.add_argument("--slot", default="", help="Slot tujuan; watermark memakai akun pemilik slot (jam… = bisnis, u… = utama)")
+    ap.add_argument("--foto", default="", help="Foto dari 'jalankan foto ambil' sebagai latar penuh (tata letak foto)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
+    a.foto, a.kredit = foto_latar(a.foto) if a.foto else (None, "")
     if a.palet != "auto":
         if not a.palet.isdigit():
             ap.error("--palet harus auto atau angka")

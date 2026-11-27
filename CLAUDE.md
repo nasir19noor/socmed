@@ -57,7 +57,7 @@ deletes everything in `~/.openclaw/workspace/konten-threads/gambar/`
 (PNGs and `.akun` sidecars), after listing them (mtime, size, name) in the
 log and the run summary. It is deliberately not an OpenClaw cron job.
 23:00 WIB sits between the last post (20:00) and the first "Threads buat"
-(07:30); images are not needed after posting (they are uploaded to imgbb).
+(07:00); images are not needed after posting (they are uploaded to imgbb).
 A manual proposal for a later date whose image was rendered earlier loses
 it and must be re-rendered.
 
@@ -75,11 +75,22 @@ re-run after every update.
    slots: research on the account's theme, 2 options, visuals, `antrian
    simpan`, each option to WhatsApp, wait for `OK`. Scheduled slots of both
    accounts have **no proposals** — see mode 6. `bisnis` (@lantip.ai.id,
-   AI/cloud/DevOps + business) posts `jam08` … `jam20` every 2 h; `utama`
-   (@nasir19noor, tech/parenting/culinary) posts `u09`/`u12`/`u19`.
-   Schedules and themes live in `antrian.JADWAL` / `TEMA` (`antrian jadwal`
-   prints them); `jam08`/`u09` (`SLOT_PANJANG`) are 4–7-post threads, the
-   rest one post.
+   technology; business only as the business side of tech) posts `jam08` …
+   `jam20` every 2 h, **one rubric per slot**; `utama` (@nasir19noor,
+   tech/parenting/culinary) posts `u09`/`u12`/`u19`. Schedules, themes and
+   rubrics live in `antrian.JADWAL` / `TEMA` / `RUBRIK` (`antrian jadwal`
+   prints them). `RUBRIK[slot]` holds `nama`, `format` (panjang = 4–7-post
+   thread, pendek = one post; `SLOT_PANJANG` is derived from it), `visual`
+   (`bebas` / `foto` / `foto-tokoh` / `tanpa`), `wajib` and `ingat` (days
+   of topic memory). bisnis: jam08 Deep Dive (long), jam10 Kisah Fiktif
+   (long), jam12 Fun Fact (photo bg), jam14 Kutipan Tokoh (figure photo bg),
+   jam16 Kisah Nyata (long, photo), jam18 Tips & Trik (photo if relevant),
+   jam20 Berita (no image, news URL). `antrian simpan` enforces `wajib`:
+   `fiktif` = post 1 contains "fiktif" (the disclosure), `tautan` = post 1
+   has a URL, `sumber` = a source URL; visual `tanpa` rejects `gambar`, and
+   a scheduled slot's format must match. `antrian rubrik --slot S` prints
+   the rubric plus that slot's topics for `ingat` days and today's other
+   slots — Mode 6 reads it first.
 2. **Owner replies** — `OK n`, `revisi n: …`, `ganti topik`, `skip`,
    `status`, `contoh: …`, free requests ("buatkan konten …", "analisa …").
 3. **Posting** — one cron per slot (bisnis every 2 h 08.00–20.00,
@@ -95,7 +106,8 @@ re-run after every update.
    suggestions, sends one WhatsApp message per account, and stores the
    suggestions with `laporan saran`.
 6. **Auto-post** (accounts in `antrian.OTOMATIS` — both) — cron "Threads
-   buat <slot>" 30 min before each slot (`antrian.jam_buat`): research,
+   buat <slot>" 60 min before a long-thread slot and 30 min before a short
+   one (`antrian.jam_buat`): read `antrian rubrik`, research,
    write **one** option, render a visual, `antrian simpan` — which, for an
    auto slot, requires exactly one option and stores it already
    `disetujui` (`otomatis: true`; `ganti` keeps it approved). No WhatsApp
@@ -104,7 +116,11 @@ re-run after every update.
    goes live.
 
 **Cron** (`cron-setup.sh`): 21 jobs, each slot a "buat" + "posting" pair
-plus the weekly report. `bash cron-setup.sh reset` removes every job whose
+plus the weekly report. Slots, times and formats come from `python3
+skills/konten-threads/scripts/antrian.py cron-tabel` (one line per slot:
+akun slot menit_buat jam_buat jam_posting format), read **before** any
+reset deletes jobs; the script aborts unless it gets 10 lines. Changing a
+slot's format moves its "buat" time, so it needs a cron reset. `bash cron-setup.sh reset` removes every job whose
 name starts with `Threads ` (`openclaw cron list --all --json` →
 `openclaw cron remove <id>`; the JSON shape is undocumented, so the parser
 accepts a bare array or an object holding one, skips any banner text, and

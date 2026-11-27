@@ -4,7 +4,7 @@ name: 'Hapus gambar konten-threads'
 # ~/.openclaw/workspace/konten-threads/gambar/ once a day. Runs on the
 # OpenClaw host through the same self-hosted runner as deploy.yml.
 # 16:00 UTC = 23:00 WIB: after the last post (20:00) and before the first
-# "Threads buat" job (07:30), so no queued scheduled slot loses its image.
+# "Threads buat" job (07:00), so no queued scheduled slot loses its image.
 # Posted images are already hosted on imgbb/Threads and are not needed again.
 on:
   schedule:

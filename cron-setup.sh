@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Mendaftarkan cron job konten Threads di OpenClaw (zona waktu WIB). Kedua akun posting otomatis
-# tanpa usulan: job "buat" 30 menit sebelum jam posting membuat & menyimpan konten (Mode 6), job
-# "posting" di jam slotnya memposting dan mengirim tautannya ke WA (Mode 3).
-#   akun bisnis (@lantip.ai.id): jam08 … jam20 (tiap 2 jam)  -> 7 buat + 7 posting
-#   akun utama (@nasir19noor):   u09, u12, u19                 -> 3 buat + 3 posting
-#   laporan mingguan Minggu 21.00                              -> 1
-# Total 21 job. Jadwal harus sama dengan antrian.JADWAL / antrian.jam_buat.
+# tanpa usulan: job "buat" sebelum jam posting membuat & menyimpan konten (Mode 6; 60 menit sebelumnya
+# untuk utas panjang, 30 menit untuk pendek), job "posting" di jam slotnya memposting dan mengirim
+# tautannya ke WA (Mode 3).
+#   akun bisnis (@lantip.ai.id): jam08 … jam20 (tiap 2 jam, satu rubrik per slot) -> 7 buat + 7 posting
+#   akun utama (@nasir19noor):   u09, u12, u19                                    -> 3 buat + 3 posting
+#   laporan mingguan Minggu 21.00                                                 -> 1
+# Total 21 job. Slot, jam, dan format dibaca dari antrian.py (`antrian.py cron-tabel`), satu sumber
+# dengan antrian.JADWAL / RUBRIK / jam_buat.
 #
 #   bash cron-setup.sh          daftarkan (jangan diulang: job akan dobel)
 #   bash cron-setup.sh reset    hapus SEMUA job yang namanya diawali "Threads ", lalu daftarkan ulang
@@ -27,6 +29,15 @@ if ! [[ "$PEMILIK" =~ ^\+[0-9]{9,15}$ ]]; then
 fi
 TZ_ID="Asia/Jakarta"
 SKRIP="~/.openclaw/workspace/skills/konten-threads/scripts/jalankan"
+
+# Slot, jam, dan format dari antrian.py — dibaca SEBELUM reset menghapus apa pun.
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TABEL="$(python3 "$DIR/skills/konten-threads/scripts/antrian.py" cron-tabel)"
+if [[ "$(wc -l <<< "$TABEL")" -ne 10 ]]; then
+  echo "cron-tabel tidak berisi 10 slot:" >&2
+  echo "$TABEL" >&2
+  exit 1
+fi
 
 # ID semua job yang namanya diawali "Threads ". Format JSON `cron list` tidak didokumentasikan, jadi
 # diterima larik langsung atau objek berisi larik (jobs/items/data/automations); teks lain sebelum
@@ -69,33 +80,17 @@ fi
 
 openclaw config set cron.enabled true
 
-# $1 akun, $2 slot, $3 jam posting (HH), $4 format
-daftar_slot() {
-  local akun="$1" slot="$2" jam=$((10#$3)) format="$4"
-  openclaw cron add --name "Threads buat $slot" --cron "30 $((jam - 1)) * * *" --tz "$TZ_ID" \
+# Per slot: "buat" (Mode 6, rubrik dibaca agen lewat `antrian rubrik`) lalu "posting" (Mode 3).
+while read -r AKUN SLOT MENIT JAM_BUAT JAM FORMAT; do
+  openclaw cron add --name "Threads buat $SLOT" --cron "$MENIT $JAM_BUAT * * *" --tz "$TZ_ID" \
     --session isolated \
-    --message "Jalankan skill konten-threads Mode 6: akun=$akun, slot=$slot ($format, posting $3.00 WIB). Tanpa usulan ke WA." \
+    --message "Jalankan skill konten-threads Mode 6: akun=$AKUN, slot=$SLOT ($FORMAT, posting $(printf %02d "$JAM").00 WIB). Baca rubriknya dulu: $SKRIP antrian rubrik --slot $SLOT . Tanpa usulan ke WA." \
     --announce --channel whatsapp --to "$PEMILIK"
-  openclaw cron add --name "Threads posting $slot" --cron "0 $jam * * *" --tz "$TZ_ID" \
+  openclaw cron add --name "Threads posting $SLOT" --cron "0 $JAM * * *" --tz "$TZ_ID" \
     --session isolated --light-context \
-    --message "Jalankan skill konten-threads Mode 3: $SKRIP post_threads --slot $slot . Laporkan hasilnya singkat (tautan postingan, atau alasan tidak diposting)." \
+    --message "Jalankan skill konten-threads Mode 3: $SKRIP post_threads --slot $SLOT . Laporkan hasilnya singkat (tautan postingan, atau alasan tidak diposting)." \
     --announce --channel whatsapp --to "$PEMILIK"
-}
-
-# ==== Akun bisnis (@lantip.ai.id): teknologi (AI, cloud, DevOps) & bisnis, 7x sehari ====
-for JAM in 08 10 12 14 16 18 20; do
-  case "$JAM" in
-    08) FORMAT="utas panjang" ;;
-    20) FORMAT="pendek, santai/reflektif" ;;
-    *)  FORMAT="pendek" ;;
-  esac
-  daftar_slot bisnis "jam$JAM" "$JAM" "$FORMAT"
-done
-
-# ==== Akun utama (@nasir19noor): teknologi, parenting, kuliner, 3x sehari ====
-daftar_slot utama u09 09 "utas panjang"
-daftar_slot utama u12 12 "pendek"
-daftar_slot utama u19 19 "pendek, santai/reflektif"
+done <<< "$TABEL"
 
 # ---- Laporan mingguan (Minggu 21.00 WIB, setelah posting terakhir) ----
 openclaw cron add --name "Threads laporan mingguan" --cron "0 21 * * 0" --tz "$TZ_ID" \

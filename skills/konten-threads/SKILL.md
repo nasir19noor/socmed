@@ -1,7 +1,7 @@
 ---
 name: konten-threads
 description: Riset topik tren sesuai tema akun, buat konten Threads berbahasa Indonesia lengkap dengan visual, lalu posting otomatis ke Threads. Dipakai oleh cron (dua akun dengan tema & jadwal sendiri, keduanya otomatis tanpa usulan: @lantip.ai.id 7 slot, @nasir19noor 3 slot), oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
-version: 1.14.0
+version: 1.15.0
 metadata:
   openclaw:
     requires:
@@ -25,19 +25,47 @@ Data antrian: `~/.openclaw/workspace/konten-threads/` (dibuat otomatis oleh skri
 ## Jadwal, tema & slot
 
 Dua akun, masing-masing dengan **tema dan jadwal sendiri** (`{SKILL_DIR}/scripts/jalankan antrian jadwal`).
-**Keduanya posting otomatis tanpa usulan** (Mode 6): 30 menit sebelum jam posting, satu cron membuat **1 konten**
-untuk slot itu dan menyimpannya sudah disetujui; cron posting di jam slotnya memposting dan mengirim tautannya ke WA.
+**Keduanya posting otomatis tanpa usulan** (Mode 6): sebelum jam posting (60 menit untuk utas panjang, 30 menit untuk
+pendek), satu cron membuat **1 konten** untuk slot itu dan menyimpannya sudah disetujui; cron posting di jam slotnya
+memposting dan mengirim tautannya ke WA. Tiap slot terjadwal punya **rubrik** (isi, format, visual, syarat) —
+baca dengan `{SKILL_DIR}/scripts/jalankan antrian rubrik --slot <slot>` (sekaligus menampilkan topik slot itu yang
+sudah dipakai). `antrian simpan` menolak konten yang tidak memenuhi syarat rubriknya.
 
-**Akun `bisnis` — @lantip.ai.id.** Tema: **teknologi (AI, cloud, DevOps) dan bisnis** (strategi, produktivitas,
-transformasi digital, UMKM & startup, karier di bidang teknologi). Nada: praktis, tetap "saya" — tanpa cerita
-pengalaman karangan (lihat *Aturan keamanan konten*).
-Posting 7× sehari:
+**Akun `bisnis` — @lantip.ai.id.** Tema: **teknologi** (AI, cloud, DevOps, keamanan, software). Bisnis hanya
+diselipkan **sebagai sisi bisnis teknologi** (startup, produk, industri teknologi, dampak teknologi ke cara kerja),
+bukan bisnis umum. Nada: praktis, tetap "saya" — tanpa pengalaman pribadi karangan (kisah fiktif hanya di rubrik
+`jam10`, dengan pengakuan fiktif). Posting 7× sehari, satu rubrik per slot:
 
-| Konten dibuat | Slot (jam posting) | Format |
-|---------------|--------------------|--------|
-| 07.30 WIB | `jam08` (08.00) | **Panjang**: utas 4–7 postingan berantai |
-| 09.30, 11.30, 13.30, 15.30, 17.30 | `jam10`, `jam12`, `jam14`, `jam16`, `jam18` | **Pendek**: 1 postingan (≤ 300 karakter ideal) |
-| 19.30 WIB | `jam20` (20.00) | **Pendek**: 1 postingan, nada lebih santai/reflektif |
+| Dibuat | Slot | Rubrik | Format | Visual |
+|--------|------|--------|--------|--------|
+| 07.00 | `jam08` | **Deep Dive**: penjelasan mendalam satu konsep/teknologi | Utas panjang | template/desain bebas |
+| 09.00 | `jam10` | **Kisah Fiktif** yang memberi pelajaran nyata (lihat di bawah) | Utas panjang | template/desain bebas |
+| 11.30 | `jam12` | **Fun Fact** teknologi terverifikasi | Pendek | **foto asli sebagai background** |
+| 13.30 | `jam14` | **Kutipan Tokoh** teknologi bersumber | Pendek | **foto tokoh sebagai background** (`--gaya kutipan`) |
+| 15.00 | `jam16` | **Kisah Nyata**/sejarah teknologi | Utas panjang | **foto asli** |
+| 17.30 | `jam18` | **Tips & Trik** yang langsung bisa dicoba | Pendek | **foto asli** bila relevan, selain itu template |
+| 19.30 | `jam20` | **Berita** teknologi ≤ 24 jam + URL berita | Pendek | **tanpa gambar** |
+
+Aturan rubrik:
+- **Kisah Fiktif (`jam10`)**: postingan 1 **wajib mengakui bahwa kisahnya fiktif** (mis. "Kisah fiktif, tapi
+  pelajarannya nyata." — `simpan` menolak bila kata "fiktif" tidak ada di postingan 1). Orang ketiga dengan nama
+  karangan; bukan "saya", bukan "klien saya", tanpa nama perusahaan nyata. Detail teknis harus benar dan realistis
+  (mis. port 22 dibuka dari `0.0.0.0/0`, di-brute force, server dibobol). Fokus pada pelajaran dan pencegahan
+  (security group, bastion/SSM, key-only auth, fail2ban, least privilege), **bukan langkah serangan**.
+- **Fun Fact & Kisah Nyata (`jam12`, `jam16`)**: banyak "fakta" dan sejarah populer teknologi yang ternyata mitos
+  atau keliru (mis. kata *bug* sudah dipakai sebelum ngengat Grace Hopper 1947). Verifikasi dari sumber yang
+  dibaca, sebutkan nuansanya, isi `sumber`. Jangan ulangi topik dalam rentang `antrian rubrik` (90/180 hari).
+- **Kutipan Tokoh (`jam14`)**: hanya kutipan yang sumbernya jelas (Wikiquote bagian *sourced*, wawancara, buku) —
+  kutipan teknologi sangat sering salah atribusi; jika ragu, pilih kutipan lain. Tokoh yang sama tidak diulang
+  dalam 30 hari. Kutipan berbahasa Inggris boleh dibiarkan asli, lalu beri makna singkat dalam bahasa Indonesia.
+- **Foto background (`jam12`, `jam14`, `jam16`, `jam18`)**: cari dengan `jalankan foto cari`, ambil dengan
+  `jalankan foto ambil`, lalu `render_visual --foto <path> --slot <slot>` (kredit foto otomatis), atau desain bebas
+  dengan kredit. Foto harus **benar-benar subjeknya** (tokoh itu sendiri; benda/peristiwa yang dibahas). Untuk
+  Tips & Trik, foto laptop/keyboard generik tidak menambah apa-apa — pakai template biasa. Jika tidak ada foto yang
+  cocok, pakai template tanpa foto; jangan memaksakan foto yang tidak relevan.
+- **Berita (`jam20`)**: berita ≤ 24 jam dari media kredibel; ringkas apa yang terjadi dan kenapa penting, lalu
+  **URL berita yang benar-benar kamu baca** di postingan 1 (tidak menebak URL). **Tanpa `gambar`** — Threads
+  menampilkan kartu pratinjau tautan. Jangan mengulang topik `jam08` hari itu.
 
 **Akun `utama` — @nasir19noor.** Tema: **teknologi, parenting, kuliner** (kuliner: boleh angkat kuliner
 Purwokerto–Banyumas). Nada personal dan hangat, tetapi **bukan cerita keseharian karangan**: jangan menulis seolah
@@ -46,15 +74,15 @@ pemilik baru saja membeli, makan, mengalami, atau berbicara dengan anak/orang la
 
 | Konten dibuat | Slot (jam posting) | Format |
 |---------------|--------------------|--------|
-| 08.30 WIB | `u09` (09.00) | **Panjang**: utas 4–7 postingan |
+| 08.00 WIB | `u09` (09.00) | **Panjang**: utas 4–7 postingan |
 | 11.30 WIB | `u12` (12.00) | **Pendek**: 1 postingan |
 | 18.30 WIB | `u19` (19.00) | **Pendek**: 1 postingan, santai/reflektif |
 
 - Topik slot terjadwal **harus masuk tema akunnya**. Tren umum/lokal hanya dipakai bila bisa dikaitkan dengan tema
-  itu (mis. tren nasional → sudut teknologi/bisnis untuk `bisnis`, atau sudut parenting/kuliner untuk `utama`).
+  itu (mis. tren nasional → sudut teknologi untuk `bisnis`, atau sudut parenting/kuliner untuk `utama`).
 - Dalam satu hari, **jangan ulangi topik atau sudut pandang** antar slot akun yang sama, dan jangan memposting topik
   yang sama di kedua akun pada hari yang sama. Sebar kategori tema di semua slot akun itu.
-- `kategori` opsi: `teknologi`, `bisnis` (akun bisnis); `teknologi`, `parenting`, `kuliner` (akun utama).
+- `kategori` opsi: `teknologi` (akun bisnis; `bisnis` hanya untuk sisi bisnis teknologi); `teknologi`, `parenting`, `kuliner` (akun utama).
 
 Batas Threads: **500 karakter per postingan** (emoji dihitung sesuai byte UTF-8 — hemat emoji), **1 tag topik per postingan**, maks. 5 tautan.
 
@@ -95,7 +123,7 @@ Akun diambil dari permintaan atau slotnya (`jam…` = bisnis, `u…` = utama).
 3. **Tulis konten** dengan suara pemilik: **baca dulu `referensi/contoh-postingan.md`** (postingan asli pemilik)
    lalu `referensi/gaya-bahasa.md`. Tiru gaya, ritme, dan panjangnya — jangan menyalin isinya. Pakai "saya", tanpa emoji/hashtag.
    Sebelum disimpan, cek tiap draf: "Apakah ini terdengar seperti contoh-contoh asli?" Jika tidak, tulis ulang.
-   - Slot `jam08` dan `u09`: tiap opsi berupa array `posts` berisi 4–7 postingan. Postingan 1 = hook kuat; terakhir = penutup + ajakan diskusi.
+   - Slot utas panjang (`jam08`, `jam10`, `jam16`, `u09`; lihat `antrian jadwal`): tiap opsi berupa array `posts` berisi 4–7 postingan. Postingan 1 = hook kuat; terakhir = penutup + ajakan diskusi.
    - Slot lain: `posts` berisi 1 postingan.
    - Isi `kategori` (lihat tema akun), `tag` (satu tag topik, tanpa #, mis. `Parenting`), dan `visual` (lihat langkah 4).
 4. **Buat visual** untuk tiap opsi. **Visual tidak boleh seragam:** opsi dalam satu slot memakai tampilan yang
@@ -337,24 +365,33 @@ tanyakan: "Masih ada usulan manualN yang belum selesai. Lanjutkan itu atau mulai
 ## Mode 6 — Posting otomatis tanpa usulan (kedua akun; cron "Threads buat <slot>": "Mode 6: akun=…, slot=…")
 
 Pemilik meminta semua slot terjadwal kedua akun diposting **tanpa usulan dan tanpa persetujuan**. Cron ini berjalan
-30 menit sebelum jam posting; job posting di jam slotnya (Mode 3) yang memposting dan mengirim tautannya ke WA.
+60 menit (utas panjang) atau 30 menit (pendek) sebelum jam posting; job posting di jam slotnya (Mode 3) yang
+memposting dan mengirim tautannya ke WA.
 
-1. Ikuti **Mode 1 langkah 1–4** untuk akun slot itu (tema akun!), tetapi buat **1 konten saja** (bukan 2 opsi) dan
-   **jangan kirim apa pun ke WhatsApp**. Riset cukup secukupnya untuk satu konten. Cek topik hari ini di kedua akun (`antrian status`, `antrian riwayat --hari 7`) agar tidak berulang.
+0. **Baca rubrik slot dulu:** `{SKILL_DIR}/scripts/jalankan antrian rubrik --slot <slot>` — isi, format, visual,
+   syarat, dan topik slot itu yang sudah dipakai (jangan diulang). Ikuti juga *Aturan rubrik* di bagian Jadwal.
+1. Ikuti **Mode 1 langkah 1–4** untuk akun slot itu (tema akun & rubrik slot!), tetapi buat **1 konten saja**
+   (bukan 2 opsi) dan **jangan kirim apa pun ke WhatsApp**. Riset cukup secukupnya untuk satu konten. Cek juga topik
+   hari ini di kedua akun (`antrian status`, `antrian riwayat --hari 7`) agar tidak berulang.
 2. Karena tidak ada yang memeriksa sebelum tayang, **lebih hati-hati dari biasanya**:
    - Hanya fakta yang sumbernya jelas dan sudah kamu baca; jika ragu, pilih topik evergreen dalam tema (bisnis: praktik
      DevOps/cloud, pelajaran memakai AI, tips produktivitas/bisnis; utama: tips parenting, asal-usul/resep/fakta
      kuliner, tips memakai teknologi) daripada kabar yang belum pasti.
-   - **Tanpa cerita fiktif.** Jangan mengarang kejadian orang pertama ("Sore ini saya beli mendoan dekat kantor…",
+   - **Tanpa cerita fiktif** (kecuali rubrik Kisah Fiktif `jam10`, yang wajib diakui fiktif dan memakai orang
+     ketiga). Jangan mengarang kejadian orang pertama ("Sore ini saya beli mendoan dekat kantor…",
      "Anak saya tadi bertanya…", "Kemarin klien saya…"). Pakai sudut yang jujur: fakta/sejarah, tips, opini, observasi
      umum, atau pertanyaan ke pembaca ("Mendoan asli Banyumas digoreng setengah matang. Kalian tim mendoan lembek atau
      kriuk?"). Cerita pribadi hanya boleh jika pemilik sendiri yang menceritakannya.
    - **Jangan** mengangkat duka/bencana, politik, SARA, kesehatan/obat yang berisiko, isu hukum, saran investasi/
      keuangan spesifik, atau menyebut orang/perusahaan tertentu secara negatif. Tanpa promosi/jualan.
    - Cek draf terhadap `referensi/contoh-postingan.md` dan batas karakter sebelum menyimpan.
-3. Visual: template cepat (`render_visual --slot <slot>`) atau desain bebas (`render_html --slot <slot>`), satu gambar.
-   Untuk kuliner, tokoh publik, atau tempat tertentu, coba dulu foto asli (`jalankan foto cari/ambil`, lihat Mode 1
-   langkah 4) dalam desain bebas dengan kredit tampil; jika tidak ada yang cocok, lanjut tanpa foto.
+3. Visual **sesuai rubrik** (`visual` di `antrian rubrik`), satu gambar:
+   - `bebas`: template cepat (`render_visual --slot <slot>`) atau desain bebas (`render_html --slot <slot>`). Untuk
+     kuliner, tokoh publik, atau tempat tertentu, coba dulu foto asli (lihat Mode 1 langkah 4).
+   - `foto` / `foto-tokoh`: `jalankan foto cari "<subjek>"` → `jalankan foto ambil <id>` →
+     `render_visual --foto <path> --slot <slot> --label "<nama rubrik>" ...` (Kutipan Tokoh: `--gaya kutipan`,
+     `--judul "<kutipan>"`, `--isi "<nama tokoh>"`). Tidak ada foto yang cocok → `render_visual` tanpa `--foto`.
+   - `tanpa`: jangan buat gambar dan jangan isi `gambar`.
 4. Simpan — skrip langsung menandainya **disetujui** (slot otomatis hanya menerima tepat 1 opsi):
    ```bash
    {SKILL_DIR}/scripts/jalankan antrian simpan --slot <slot> <<'JSON'
@@ -375,7 +412,8 @@ tetap otomatis), `ganti topik 14`, atau `status`.
 - Fakta harus bersumber; jika ragu, tulis sebagai opini atau tanyakan.
 - **Jangan mengarang pengalaman pribadi** pemilik (kedua akun): tidak ada "tadi saya…", "anak saya…", "klien saya…",
   tempat, pembelian, atau percakapan yang tidak pernah ia ceritakan. Opini dan sikap ("menurut saya…") boleh;
-  kejadian karangan tidak.
+  kejadian karangan tidak. Satu-satunya fiksi yang boleh: rubrik **Kisah Fiktif** (`jam10` @lantip.ai.id) — diakui
+  fiktif di postingan 1, orang ketiga dengan nama karangan, tanpa orang/perusahaan nyata.
 - Hindari SARA, politik partisan, hoaks, dan data pribadi orang lain. Foto orang sungguhan di visual hanya tokoh
   publik lewat `jalankan foto` (lisensi bebas, kredit tampil), tidak pernah orang biasa atau anak-anak.
 - Isu duka/bencana: nada empatik, tanpa jualan, tanpa candaan.

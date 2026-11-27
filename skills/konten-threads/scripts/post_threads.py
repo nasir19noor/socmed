@@ -19,6 +19,7 @@ import argparse
 import base64
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -106,12 +107,14 @@ def tunggu_siap(cid: str, maks=60):
     raise RuntimeError(f"Container {cid} belum siap setelah {maks} detik")
 
 
-def posting(teks, gambar_url=None, reply_to=None, tag=None):
+def posting(teks, gambar_url=None, reply_to=None, tag=None, tautan=None):
     data = {"text": teks, "access_token": token()}
     if gambar_url:
         data.update(media_type="IMAGE", image_url=gambar_url)
     else:
         data["media_type"] = "TEXT"
+        if tautan:
+            data["link_attachment"] = tautan  # kartu pratinjau tautan (hanya untuk postingan teks)
     if reply_to:
         data["reply_to_id"] = reply_to
     if tag:
@@ -151,8 +154,10 @@ def jalankan(slot, tanggal, dry):
     url_gbr = unggah_gambar(gbr) if gbr else None
     ids, induk = [], None
     for i, t in enumerate(posts):
+        url_teks = re.search(r"https?://[^\s)\]>\"']+", t) if i == 0 and not url_gbr else None
         pid = posting(t, gambar_url=url_gbr if i == 0 else None,
-                      reply_to=induk, tag=tag if i == 0 else None)
+                      reply_to=induk, tag=tag if i == 0 else None,
+                      tautan=url_teks.group(0).rstrip(".,;:!?") if url_teks else None)
         ids.append(pid)
         induk = pid  # balasan berantai: tiap postingan membalas postingan sebelumnya
         if i < len(posts) - 1:

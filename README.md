@@ -4,12 +4,13 @@ Alur:
 
 ```
 Kedua akun posting OTOMATIS, tanpa usulan:
-@lantip.ai.id (bisnis) — tema teknologi (AI, cloud, DevOps) & bisnis
-  posting 08.00 (utas panjang) 10.00 12.00 14.00 16.00 18.00 20.00 WIB
+@lantip.ai.id (bisnis) — tema teknologi (bisnis hanya sebagai sisi bisnis teknologi), satu rubrik per slot
+  08.00 Deep Dive · 10.00 Kisah Fiktif · 12.00 Fun Fact · 14.00 Kutipan Tokoh
+  16.00 Kisah Nyata · 18.00 Tips & Trik · 20.00 Berita
 @nasir19noor (utama) — tema teknologi, parenting, kuliner
   posting 09.00 (utas panjang) 12.00 19.00 WIB
 
-30 menit sebelum slot  cron "buat"    → riset sesuai tema akun → 1 konten + visual → langsung disetujui (tanpa WA)
+60/30 mnt sebelum slot cron "buat"    → baca rubrik → riset → 1 konten + visual → langsung disetujui (tanpa WA)
 jam slot               cron "posting" → diposting ke akun slotnya → tautan ke WA
 Sebelum tayang Anda bisa "skip 14" / "revisi u12 1: ..." / "ganti topik 16" (dari nomor pemilik)
 Minggu 21.00 WIB       cron "laporan" → laporan mingguan per akun (engagement, reply, follower, saran) → WA
@@ -163,22 +164,43 @@ Bot lalu mengirim 2 opsi. Balas `OK 1` untuk menyetujui, dan konten akan diposti
 | `analisa tren teknologi minggu ini` | ringkasan + ide konten |
 | `threads laporan` / `threads laporan @bisnis` | laporan mingguan sekarang (semua akun / satu akun) |
 
-## Tema & jadwal per akun (sejak skill 1.12.0: keduanya otomatis)
+## Tema & jadwal per akun (keduanya otomatis; rubrik @lantip.ai.id sejak skill 1.15.0)
 
 | Akun | Tema | Posting | Konten dibuat |
 |---|---|---|---|
-| @lantip.ai.id (`bisnis`) | teknologi (AI, cloud, DevOps) dan bisnis | 7×: 08.00 (utas panjang), 10.00, 12.00, 14.00, 16.00, 18.00, 20.00 | 30 menit sebelumnya (07.30 … 19.30) |
-| @nasir19noor (`utama`) | teknologi, parenting, kuliner | 3×: 09.00 (utas panjang), 12.00, 19.00 | 08.30, 11.30, 18.30 |
+| @lantip.ai.id (`bisnis`) | teknologi (AI, cloud, DevOps, keamanan, software); bisnis hanya sebagai sisi bisnis teknologi | 7×, satu rubrik per slot (tabel di bawah) | 60 menit sebelum utas panjang, 30 menit sebelum pendek |
+| @nasir19noor (`utama`) | teknologi, parenting, kuliner | 3×: 09.00 (utas panjang), 12.00, 19.00 | 08.00, 11.30, 18.30 |
 
-**Tanpa usulan.** Untuk tiap slot ada dua cron job: **"Threads buat <slot>"** 30 menit sebelum jam posting membuat
-satu konten sesuai tema akun (riset, tulisan, gambar) dan menyimpannya sebagai sudah disetujui, tanpa pesan WA;
+Rubrik @lantip.ai.id (`antrian.RUBRIK`; lihat dengan `jalankan antrian jadwal`):
+
+| Jam | Slot | Rubrik | Format | Gambar |
+|---|---|---|---|---|
+| 08.00 | `jam08` | Deep Dive: penjelasan mendalam satu teknologi | utas panjang | template/desain bebas |
+| 10.00 | `jam10` | Kisah Fiktif dengan pelajaran nyata, **diakui fiktif** di postingan pertama | utas panjang | template/desain bebas |
+| 12.00 | `jam12` | Fun Fact teknologi (terverifikasi, bersumber) | pendek | foto asli sebagai background |
+| 14.00 | `jam14` | Kutipan Tokoh teknologi (bersumber) | pendek | foto tokoh sebagai background |
+| 16.00 | `jam16` | Kisah Nyata/sejarah teknologi | utas panjang | foto asli |
+| 18.00 | `jam18` | Tips & Trik | pendek | foto asli bila relevan, selain itu template |
+| 20.00 | `jam20` | Berita teknologi ≤ 24 jam + URL berita | pendek | tanpa gambar (kartu pratinjau tautan) |
+
+`antrian simpan` menolak konten yang melanggar syarat rubrik: Kisah Fiktif tanpa kata "fiktif" di postingan 1,
+Berita tanpa URL atau dengan gambar, Fun Fact/Kutipan/Kisah Nyata/Deep Dive tanpa `sumber`, atau format yang salah.
+Agar topik tidak berulang, `jalankan antrian rubrik --slot <slot>` menampilkan topik slot itu dalam rentang
+tertentu (Fun Fact 90 hari, Kisah Nyata 180 hari, Kutipan Tokoh 30 hari, dst.). Foto background dibuat dengan
+`render_visual --foto <path dari jalankan foto ambil>`: foto penuh, gradasi gelap, kredit foto otomatis.
+Postingan teks yang memuat URL (rubrik Berita) dikirim dengan `link_attachment`, sehingga Threads menampilkan kartu
+pratinjau tautan. **Mengubah format atau jam slot perlu reset cron** (jam pembuatan ikut bergeser).
+
+**Tanpa usulan.** Untuk tiap slot ada dua cron job: **"Threads buat <slot>"** 60 menit (utas panjang) atau 30 menit
+(pendek) sebelum jam posting membuat satu konten sesuai tema akun dan rubrik slotnya (riset, tulisan, gambar) dan menyimpannya sebagai sudah disetujui, tanpa pesan WA;
 **"Threads posting <slot>"** di jam slotnya memposting dan mengirim tautannya ke WA, jadi Anda bisa memeriksa dan
 menghapusnya di aplikasi Threads bila perlu. Sebelum tayang Anda masih bisa `skip 14`, `revisi 14 1: …`,
 `ganti topik 14`, atau `status` (`u12` dst. untuk @nasir19noor). Karena tidak diperiksa dulu, konten otomatis
 menghindari topik sensitif (duka, politik, SARA, kesehatan berisiko, isu hukum, saran investasi) dan memilih topik
 evergreen bila kabar terbaru belum pasti. Konten juga **tidak mengarang pengalaman pribadi** (mis. "sore ini saya
 beli mendoan…", "anak saya tadi…"); sudutnya fakta, tips, opini, atau pertanyaan ke pembaca. Cerita pribadi hanya
-dipakai bila Anda sendiri yang menceritakannya.
+dipakai bila Anda sendiri yang menceritakannya. Satu-satunya fiksi: rubrik Kisah Fiktif @lantip.ai.id, yang
+selalu diakui fiktif, memakai orang ketiga dengan nama karangan, dan tidak menyebut orang/perusahaan nyata.
 
 Jadwal dan tema ada di `antrian.py` (`JADWAL`, `TEMA`, `OTOMATIS`, `jam_buat`; cek dengan `jalankan antrian jadwal`)
 dan harus sama dengan `cron-setup.sh`. Slot akun utama bernama `u09`, `u12`, `u19` (jam 12.00 dipakai kedua akun).
@@ -244,7 +266,7 @@ dengan **reset_cron** dicentang (lihat *Hapus semua cron job Threads dan daftark
 
 `.github/workflows/hapus-gambar.yml` berjalan setiap hari pukul **23.00 WIB** (cron GitHub `0 16 * * *`, UTC) di
 runner yang sama dan menghapus semua isi `~/.openclaw/workspace/konten-threads/gambar/` (PNG dan file `.akun`).
-Jam itu sesudah posting terakhir (20.00) dan sebelum konten pertama dibuat (07.30), jadi gambar slot terjadwal tidak
+Jam itu sesudah posting terakhir (20.00) dan sebelum konten pertama dibuat (07.00), jadi gambar slot terjadwal tidak
 ikut terhapus sebelum tayang; gambar yang sudah diposting sudah tersimpan di imgbb/Threads. Sebelum menghapus,
 workflow mencetak daftar file (waktu ubah, ukuran, nama) ke log dan ke ringkasan run, beserta jumlahnya. Bisa juga dijalankan manual: **Actions → Hapus gambar konten-threads → Run workflow**.
 Catatan: usulan manual untuk tanggal berikutnya yang gambarnya dibuat hari ini ikut terhapus dan perlu dirender ulang.

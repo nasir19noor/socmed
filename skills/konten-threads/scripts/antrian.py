@@ -7,17 +7,19 @@ Perintah:
   setujui  --slot S --opsi N        tandai opsi N disetujui
   skip     --slot S                 lewati slot hari ini
   status   [--tanggal YYYY-MM-DD]   ringkasan hari ini
-  riwayat  [--hari 7]               topik yang sudah diposting/diusulkan N hari terakhir
+  riwayat  [--hari 7] [--slot S]    topik yang sudah diposting/diusulkan N hari terakhir
   ambil    --slot S                 cetak opsi yang disetujui (JSON)
   slot-baru                         cetak nama slot manual berikutnya hari ini (manual1, manual2, ...)
-  jadwal                            jadwal, tema, dan jam pembuatan konten tiap akun
+  jadwal                            jadwal, tema, rubrik, dan jam pembuatan konten tiap akun
+  rubrik   --slot S                 petunjuk isi slot terjadwal + topik slot itu yang sudah dipakai
+  cron-tabel                        jam cron per slot (dibaca cron-setup.sh)
 
-Slot terjadwal per akun (JADWAL), masing-masing dengan tema sendiri (TEMA):
-  bisnis (@lantip.ai.id): jam08, jam10, … jam20 — tiap 2 jam 08.00–20.00 WIB
+Slot terjadwal per akun (JADWAL), masing-masing dengan tema sendiri (TEMA) dan rubrik per slot (RUBRIK):
+  bisnis (@lantip.ai.id): jam08, jam10, … jam20 — tiap 2 jam 08.00–20.00 WIB, tiap slot satu rubrik
   utama  (@nasir19noor):  u09, u12, u19 — 09.00, 12.00, 19.00 WIB
-jam08 dan u09 = utas panjang, sisanya pendek. Slot manualN = trigger manual dari WhatsApp.
-Akun OTOMATIS (keduanya) tanpa usulan: konten dibuat 30 menit sebelum jam posting (jam_buat, harus sama
-dengan cron-setup.sh), disimpan dengan tepat 1 opsi, dan langsung berstatus disetujui.
+Format (panjang/pendek) mengikuti RUBRIK. Slot manualN = trigger manual dari WhatsApp.
+Akun OTOMATIS (keduanya) tanpa usulan: konten dibuat sebelum jam posting (jam_buat: 60 menit untuk utas
+panjang, 30 menit untuk pendek; cron-setup.sh membacanya), disimpan dengan tepat 1 opsi, langsung disetujui.
 Akun: tiap slot mencatat akun Threads tujuannya; post_threads.py memakai akun itu. Slot terjadwal
 selalu ke akun pemilik slotnya; slot manual: `--akun`, default `utama`.
 
@@ -45,21 +47,55 @@ JADWAL = {
 }
 # Tema konten tiap akun (riset & topik usulan terjadwal mengikuti ini).
 TEMA = {
-    "bisnis": "teknologi (AI, cloud, DevOps) dan bisnis",
+    "bisnis": "teknologi (AI, cloud, DevOps, keamanan, software); bisnis hanya sebagai sisi bisnis teknologi "
+              "(startup, produk, industri teknologi), bukan bisnis umum",
     "utama": "teknologi, parenting, kuliner",
+}
+# Rubrik tiap slot terjadwal. format: panjang = utas 4–7 postingan, pendek = 1 postingan.
+# visual: bebas = template atau desain bebas; foto = foto asli dari internet sebagai background
+# (jalankan foto, cadangan template); foto-tokoh = foto tokoh yang dikutip; tanpa = tanpa gambar.
+# wajib: syarat yang dicek `simpan` — fiktif (postingan 1 menyebut "fiktif"), sumber (field sumber terisi),
+# tautan (postingan 1 memuat URL berita). ingat: hari ke belakang untuk cek topik berulang.
+RUBRIK = {
+    "jam08": {"nama": "Deep Dive", "format": "panjang", "visual": "bebas", "wajib": ["sumber"], "ingat": 30,
+              "isi": "utas panjang teknologi: penjelasan mendalam satu konsep/teknologi (cara kerja, kapan dipakai, "
+                     "jebakan umum); jangan tumpang tindih dengan rubrik lain hari itu"},
+    "jam10": {"nama": "Kisah Fiktif", "format": "panjang", "visual": "bebas", "wajib": ["fiktif"], "ingat": 60,
+              "isi": "kisah fiktif dunia teknologi yang memberi pelajaran nyata (mis. engineer membuka port 22 "
+                     "dari 0.0.0.0/0 lalu server dibobol). Postingan 1 WAJIB mengakui ceritanya fiktif; orang "
+                     "ketiga dengan nama karangan, tanpa perusahaan nyata; detail teknis harus benar; akhiri dengan "
+                     "pelajaran & pencegahan, bukan langkah serangan"},
+    "jam12": {"nama": "Fun Fact", "format": "pendek", "visual": "foto", "wajib": ["sumber"], "ingat": 90,
+              "isi": "satu fun fact teknologi yang terverifikasi (bukan mitos populer), dengan sumber"},
+    "jam14": {"nama": "Kutipan Tokoh", "format": "pendek", "visual": "foto-tokoh", "wajib": ["sumber"], "ingat": 30,
+              "isi": "kutipan tokoh teknologi yang sumbernya jelas (Wikiquote bagian sourced, wawancara, atau buku), "
+                     "plus satu-dua kalimat maknanya; jangan ulangi tokoh yang sama dalam 30 hari"},
+    "jam16": {"nama": "Kisah Nyata", "format": "panjang", "visual": "foto", "wajib": ["sumber"], "ingat": 180,
+              "isi": "utas panjang kisah nyata/sejarah teknologi (mis. lahirnya cloud, asal istilah bug) dengan "
+                     "sumber, termasuk nuansa yang sering salah dikutip"},
+    "jam18": {"nama": "Tips & Trik", "format": "pendek", "visual": "foto", "wajib": [], "ingat": 60,
+              "isi": "satu tips/trik teknologi yang langsung bisa dicoba (perintah, shortcut, setting)"},
+    "jam20": {"nama": "Berita", "format": "pendek", "visual": "tanpa", "wajib": ["tautan", "sumber"], "ingat": 7,
+              "isi": "berita teknologi ≤ 24 jam terakhir dari media kredibel: ringkas, kenapa penting, lalu URL "
+                     "berita yang benar-benar dibaca. Tanpa gambar"},
+    "u09": {"nama": "", "format": "panjang", "visual": "bebas", "wajib": [], "ingat": 7, "isi": "utas panjang"},
+    "u12": {"nama": "", "format": "pendek", "visual": "bebas", "wajib": [], "ingat": 7, "isi": "pendek"},
+    "u19": {"nama": "", "format": "pendek", "visual": "bebas", "wajib": [], "ingat": 7,
+            "isi": "pendek, santai/reflektif"},
 }
 SLOT = dict(sorted(((s, j) for slot in JADWAL.values() for s, j in slot.items()), key=lambda x: x[1]))
 AKUN_SLOT = {s: a for a, slot in JADWAL.items() for s in slot}
 # Slot yang formatnya utas panjang (4–7 postingan); slot lain 1 postingan pendek.
-SLOT_PANJANG = {"jam08", "u09"}
+SLOT_PANJANG = {s for s, r in RUBRIK.items() if r["format"] == "panjang"}
 # Akun yang slot terjadwalnya diposting otomatis tanpa usulan/persetujuan (1 opsi, langsung disetujui).
 OTOMATIS = {"utama", "bisnis"}
 
 
 def jam_buat(slot: str) -> str:
-    """Jam cron pembuat konten slot otomatis: 30 menit sebelum jam posting (cron-setup.sh sama)."""
+    """Jam cron pembuat konten slot otomatis: 60 menit sebelum posting untuk utas panjang (riset lebih
+    lama), 30 menit untuk pendek. cron-setup.sh membaca jam ini lewat `antrian cron-tabel`."""
     j = int(SLOT[slot][:2])
-    return f"{j - 1:02d}:30"
+    return f"{j - 1:02d}:00" if slot in SLOT_PANJANG else f"{j - 1:02d}:30"
 
 
 def slot_type(s: str) -> str:
@@ -179,6 +215,9 @@ def validasi_opsi(o: dict, slot: str, idx: int) -> list:
     fmt = o.get("format") or ("panjang" if slot in SLOT_PANJANG else "pendek")
     if fmt not in ("panjang", "pendek"):
         return [f"opsi {idx}: format harus 'panjang' atau 'pendek'"]
+    if slot in RUBRIK and fmt != RUBRIK[slot]["format"]:
+        return [f"opsi {idx}: slot {slot} ({RUBRIK[slot]['nama'] or 'terjadwal'}) formatnya {RUBRIK[slot]['format']}"]
+    err += validasi_rubrik(o, slot, idx)
     o["format"] = fmt
     if fmt == "panjang" and not (2 <= len(posts) <= 10):
         err.append(f"opsi {idx}: format panjang sebaiknya 4–7 postingan (sekarang {len(posts)})")
@@ -197,6 +236,23 @@ def validasi_opsi(o: dict, slot: str, idx: int) -> list:
     if any(c in tag for c in ".&"):
         err.append(f"opsi {idx}: tag tidak boleh berisi '.' atau '&'")
     o["tag"] = tag
+    return err
+
+
+def validasi_rubrik(o: dict, slot: str, idx: int) -> list:
+    """Syarat rubrik slot terjadwal (RUBRIK[slot]['wajib'] dan visual 'tanpa')."""
+    r = RUBRIK.get(slot)
+    if not r:
+        return []
+    err, nama, pertama = [], r["nama"] or slot, o["posts"][0]
+    if "fiktif" in r["wajib"] and "fiktif" not in pertama.lower():
+        err.append(f"opsi {idx}: rubrik {nama} — postingan 1 wajib menyatakan bahwa kisah ini fiktif")
+    if "tautan" in r["wajib"] and not re.search(r"https?://\S+", pertama):
+        err.append(f"opsi {idx}: rubrik {nama} — postingan 1 wajib memuat URL berita")
+    if "sumber" in r["wajib"] and not [u for u in o.get("sumber") or [] if str(u).startswith("http")]:
+        err.append(f"opsi {idx}: rubrik {nama} — isi 'sumber' dengan URL yang dibaca")
+    if r["visual"] == "tanpa" and o.get("gambar"):
+        err.append(f"opsi {idx}: rubrik {nama} tanpa gambar — hapus 'gambar'")
     return err
 
 
@@ -318,17 +374,44 @@ def cmd_status(a):
         print(f"- {sl} ({jam}): {info}")
 
 
-def cmd_riwayat(a):
+def baris_riwayat(hari_ke_belakang: int, slot: str = ""):
     hari = dt.datetime.now(WIB).date()
-    for i in range(a.hari):
+    for i in range(hari_ke_belakang):
         t = (hari - dt.timedelta(days=i)).isoformat()
         if not berkas(t).exists():
             continue
         d = muat(t)
         for sl, s in d["slot"].items():
+            if slot and sl != slot:
+                continue
             for k, o in enumerate(s.get("opsi", []), 1):
                 tanda = "✔ diposting" if s.get("status") == "terposting" and s.get("disetujui") == k else "usulan"
-                print(f"{t} {sl} ({akun_slot(s)}) [{tanda}] {o.get('kategori', '')}: {o.get('topik', '')}")
+                yield f"{t} {sl} ({akun_slot(s)}) [{tanda}] {o.get('kategori', '')}: {o.get('topik', '')}"
+
+
+def cmd_riwayat(a):
+    for b in baris_riwayat(a.hari, a.slot):
+        print(b)
+
+
+def cmd_rubrik(a):
+    """Petunjuk isi slot terjadwal + topik slot itu yang sudah dipakai (agar tidak berulang)."""
+    r = RUBRIK[a.slot]
+    print(f"Slot {a.slot} ({SLOT[a.slot]} WIB, akun {AKUN_SLOT[a.slot]} {handle_akun(AKUN_SLOT[a.slot])})")
+    print(f"Rubrik: {r['nama'] or '-'} | format {r['format']} | visual {r['visual']} | "
+          f"wajib: {', '.join(r['wajib']) or '-'}\nTema akun: {TEMA[AKUN_SLOT[a.slot]]}\nIsi: {r['isi']}")
+    lama = list(baris_riwayat(r["ingat"], a.slot))
+    print(f"\nTopik slot ini {r['ingat']} hari terakhir (jangan diulang):")
+    print("\n".join(lama) if lama else "(belum ada)")
+    print("\nSlot lain hari ini:")
+    print("\n".join(b for b in baris_riwayat(1) if f" {a.slot} " not in b) or "(belum ada)")
+
+
+def cmd_cron_tabel(a):
+    """Untuk cron-setup.sh: akun slot menit_buat jam_buat jam_posting format, satu slot per baris."""
+    for sl, jam in SLOT.items():
+        jb = jam_buat(sl)
+        print(AKUN_SLOT[sl], sl, int(jb[3:]), int(jb[:2]), int(jam[:2]), RUBRIK[sl]["format"])
 
 
 def cmd_ambil(a):
@@ -350,11 +433,12 @@ def cmd_slot_baru(a):
 
 def cmd_jadwal(a):
     for akun, slot in JADWAL.items():
-        jam = ", ".join(f"{s} {j}" + (" (utas panjang)" if s in SLOT_PANJANG else "") for s, j in slot.items())
         cara = "otomatis tanpa usulan" if akun in OTOMATIS else "usulan + persetujuan"
-        print(f"{akun} ({handle_akun(akun)}): tema {TEMA[akun]} ({cara})\n  posting {jam}")
-        if akun in OTOMATIS:
-            print("  konten dibuat " + ", ".join(f"{jam_buat(s)} → {s}" for s in slot))
+        print(f"{akun} ({handle_akun(akun)}): tema {TEMA[akun]} ({cara})")
+        for s, j in slot.items():
+            r = RUBRIK[s]
+            print(f"  {s} {j}  {r['nama'] or '-':<14} {r['format']:<8} visual {r['visual']:<10} "
+                  f"dibuat {jam_buat(s) if akun in OTOMATIS else '-'}")
 
 
 def tandai_terposting(tanggal, slot, tautan, ids):
@@ -385,7 +469,11 @@ def main():
     p = sub.add_parser("status"); p.add_argument("--tanggal", default=hari_ini()); p.set_defaults(fn=cmd_status)
     p = sub.add_parser("slot-baru"); p.add_argument("--tanggal", default=hari_ini()); p.set_defaults(fn=cmd_slot_baru)
     p = sub.add_parser("jadwal"); p.set_defaults(fn=cmd_jadwal)
-    p = sub.add_parser("riwayat"); p.add_argument("--hari", type=int, default=7); p.set_defaults(fn=cmd_riwayat)
+    p = sub.add_parser("riwayat"); p.add_argument("--hari", type=int, default=7)
+    p.add_argument("--slot", default="", help="hanya slot ini"); p.set_defaults(fn=cmd_riwayat)
+    p = sub.add_parser("rubrik"); p.add_argument("--slot", required=True, choices=list(SLOT))
+    p.set_defaults(fn=cmd_rubrik)
+    p = sub.add_parser("cron-tabel"); p.set_defaults(fn=cmd_cron_tabel)
     a = ap.parse_args()
     a.fn(a)
 

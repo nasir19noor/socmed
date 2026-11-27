@@ -127,9 +127,23 @@
   .tata-majalah ol li { font-size: 42px; padding-left: 110px; border-bottom: 1px solid rgba(0,0,0,.15); padding-bottom: 24px; }
   .tata-majalah ol li::before { content: counter(n, decimal-leading-zero); background: none; color: var(--aksen); font-family: var(--f-judul); font-size: 56px; width: auto; top: -10px; }
   .tata-majalah .kaki { right: 150px; text-transform: uppercase; letter-spacing: .12em; font-size: 22px; }
+
+  /* 8. foto: foto asli (render_visual --foto) penuh sebagai latar, gradasi gelap agar teks terbaca */
+  .foto { position: absolute; inset: 0; background-size: cover; background-position: center 30%; }
+  .foto::after { content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.2) 30%, rgba(0,0,0,.72) 62%, rgba(0,0,0,.9) 100%); }
+  .tata-foto { --judul: #fff; --teks: rgba(255,255,255,.9); --sorot: var(--muda); --kaki: rgba(255,255,255,.8); background: #111; }
+  .tata-foto main, .tata-foto .kaki { z-index: 1; }
+  .tata-foto main { justify-content: flex-end; }
+  .tata-foto .label { align-self: flex-start; color: #fff; background: var(--aksen); padding: 12px 22px; border-radius: 10px; margin-bottom: 36px; }
+  .tata-foto h1, .tata-foto p.isi, .tata-foto ol { text-shadow: 0 2px 16px rgba(0,0,0,.55); }
+  .tata-foto ol li::before { text-shadow: none; }
+  .kredit { position: absolute; z-index: 1; left: 80px; right: 80px; bottom: 26px; font-size: 19px; font-weight: 500;
+    color: rgba(255,255,255,.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>
 </head>
 <body class="tata-{{TATA}} {{GAYA}}">
+  {{FOTO}}
   <div class="hias"><i></i><i></i></div>
   <main>
     <div class="kepala">
@@ -140,5 +154,6 @@
     <div class="bagian">{{KONTEN}}</div>
   </main>
   <div class="kaki"><span>{{AKUN}}</span><span class="garis"></span><span>{{TANGGAL}}</span></div>
+  {{KREDIT}}
 </body>
 </html>
