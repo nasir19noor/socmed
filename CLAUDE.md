@@ -85,7 +85,9 @@ re-run after every update.
    `slot_aktif()` hides them from `status` on other days and `simpan`
    refuses them off-day. Schedules, themes and rubrics live in
    `antrian.JADWAL` / `HARI` / `TEMA` / `RUBRIK` (`antrian jadwal` prints
-   them). `RUBRIK[slot]` holds `nama`, `format` (panjang = 4–7-post
+   them). README's *Jadwal gabungan kedua akun* table mirrors them by hand
+   (post time, day, rubric, format, creation time) — update it in the same
+   change as any schedule or rubric edit. `RUBRIK[slot]` holds `nama`, `format` (panjang = 4–7-post
    thread, pendek = one post; `SLOT_PANJANG` is derived from it), `visual`
    (`bebas` / `foto` / `foto-tokoh` / `ilustrasi` / `tanpa`), `wajib`,
    `ingat` (days of topic memory) and optional `boleh_pendek` (a long slot
@@ -97,7 +99,11 @@ re-run after every update.
    `fiktif` = post 1 contains "fiktif" (the disclosure), `tautan` = post 1
    has a URL, `sumber` = a source URL, `polling` = 2–4 options ≤ 25 chars
    (`polling` on any other rubric is rejected); visual `tanpa` rejects `gambar`, and
-   a scheduled slot's format must match. `antrian rubrik --slot S` prints
+   a scheduled slot's format must match. Every scheduled slot (both
+   accounts) is also checked against `antrian.DALIL` — the owner wants no
+   Qur'an verses or hadith: HR. + a collector's name, QS. + surah/verse
+   numbers, ﷺ, Rasulullah, sabda, firman, hadis, ayat, surah. "HR Tech" and
+   "QS Rankings" deliberately pass. `antrian rubrik --slot S` prints
    the rubric plus that slot's topics for `ingat` days and today's other
    slots — Mode 6 reads it first.
 2. **Owner replies** — `OK n`, `revisi n: …`, `ganti topik`, `skip`,

@@ -1,7 +1,7 @@
 ---
 name: konten-threads
 description: Riset topik tren sesuai tema akun, buat konten Threads berbahasa Indonesia lengkap dengan visual, lalu posting otomatis ke Threads. Dipakai oleh cron (dua akun dengan tema & jadwal sendiri, keduanya otomatis tanpa usulan: @lantip.ai.id 7 slot, @nasir19noor 6 slot/hari termasuk slot mingguan), oleh permintaan tema dari WhatsApp, dan WAJIB dipakai saat pemilik ({{PEMILIK}}) mengirim pesan yang diawali kata "threads" (trigger manual).
-version: 1.16.0
+version: 1.17.0
 metadata:
   openclaw:
     requires:
@@ -84,7 +84,7 @@ pemilik baru saja membeli, makan, mengalami, atau berbicara dengan anak/orang la
 | 09.30 | `usel` 10.30 | Selasa | **Tips & Trik** teknologi | panjang* | foto + overlay |
 | 09.30 | `urab` 10.30 | Rabu | **Kuliner**: sejarah/fungsi bumbu, kenapa bangsa tertentu suka makanan tertentu | panjang* | foto + overlay |
 | 09.50 | `ukam` 10.20 | Kamis | **Polling** teknologi | pendek + polling | tanpa gambar |
-| 09.10 | `ujum` 09.40 | Jumat | **Petuah Sufi** (bukan ayat/hadis) | pendek | kaligrafi/foto tempat + overlay (bukan tokoh) |
+| 09.10 | `ujum` 09.40 | Jumat | **Petuah Islami** dari sufi/tokoh Islam (**bukan** ayat/hadis) | pendek | kaligrafi/foto tempat + overlay (bukan tokoh) |
 | 08.53 | `usab` 09.23 | Sabtu | **Fun Fact Wisata/Geografi** | pendek | foto tempat + overlay |
 | 08.47 | `umin` 09.47 | Minggu | **Psikologi, Parenting & Relationship** | panjang* | foto + overlay |
 
@@ -114,9 +114,13 @@ Aturan rubrik @nasir19noor:
 - **Kuliner (`urab`)**: tidak melulu makanan jadi; klaim sejarah bersumber, hindari mitos populer.
 - **Polling (`ukam`)**: pertanyaan netral di postingan, **2–4 pilihan di field `polling`** (maks 25 karakter per
   pilihan), tanpa gambar, tanpa promosi.
-- **Petuah Sufi (`ujum`)**: **bukan** ayat Al-Qur'an atau hadis. Hanya petuah dengan sumber kitab yang jelas
-  (Al-Hikam Ibnu 'Athaillah, Ihya' al-Ghazali, Matsnawi Rumi dari terjemahan kredibel) — banyak "kutipan Rumi" di
-  internet adalah parafrase/karangan; jika sumbernya tidak jelas, pilih petuah lain. Gambar: **kaligrafi atau foto
+- **Petuah Islami (`ujum`)**: petuah **sufi atau tokoh Islam terkenal** (Ibnu 'Athaillah, al-Ghazali, Rumi,
+  Hasan al-Bashri, Imam Syafi'i, Ibnu Qayyim, Buya Hamka, dsb.). **DILARANG ayat Al-Qur'an dan hadis** — termasuk
+  "keutamaan hari Jumat" dari hadis; jangan membuka dengan "Jumat pagi…" lalu mengutip sabda Nabi. Isinya adalah
+  petuah tokoh itu sendiri, bukan dalil. `antrian simpan` menolak penanda dalil (HR. …, QS. …, ﷺ, Rasulullah,
+  sabda, firman, hadis, ayat, surah). Hanya petuah dengan sumber kitab/buku yang jelas (Al-Hikam Ibnu 'Athaillah,
+  Ihya' al-Ghazali, Matsnawi Rumi dari terjemahan kredibel, karya Hamka) — banyak "kutipan Rumi" di internet adalah
+  parafrase/karangan; jika sumbernya tidak jelas, pilih petuah lain. Gambar: **kaligrafi atau foto
   tempat** (masjid, makam Mevlana di Konya, lanskap) dengan overlay — **jangan gambar/lukisan tokoh**. Hindari isu
   khilafiyah/sektarian.
 - **Psikologi & Parenting (`umin`)**: berbasis riset/buku, tanpa klaim diagnosis/terapi.
@@ -461,6 +465,8 @@ tetap otomatis), `ganti topik 14`, atau `status`.
 - Tidak memposting apa pun tanpa persetujuan eksplisit pemilik — kecuali slot terjadwal kedua akun (Mode 6), yang
   sudah disetujui pemilik secara umum; aturan konten di bawah tetap berlaku penuh.
 - Fakta harus bersumber; jika ragu, tulis sebagai opini atau tanyakan.
+- **Tanpa ayat Al-Qur'an dan hadis** di konten terjadwal kedua akun (permintaan pemilik). Nuansa islami cukup lewat
+  petuah sufi/tokoh Islam (rubrik `ujum`). `antrian simpan` menolak penanda dalil.
 - **Jangan mengarang pengalaman pribadi** pemilik (kedua akun): tidak ada "tadi saya…", "anak saya…", "klien saya…",
   tempat, pembelian, atau percakapan yang tidak pernah ia ceritakan. Opini dan sikap ("menurut saya…") boleh;
   kejadian karangan tidak. Satu-satunya fiksi yang boleh: rubrik **Kisah Fiktif** (`jam10` @lantip.ai.id) — diakui

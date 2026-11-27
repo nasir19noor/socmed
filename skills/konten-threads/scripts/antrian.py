@@ -124,11 +124,14 @@ RUBRIK = {
     "ukam": {"nama": "Polling", "format": "pendek", "visual": "tanpa", "wajib": ["polling"], "ingat": 60,
              "isi": "polling teknologi netral tanpa promosi (mis. LLM mana yang akan memimpin: Claude, OpenAI, "
                     "Gemini). Pertanyaan di postingan, 2–4 pilihan di field 'polling'"},
-    "ujum": {"nama": "Petuah Sufi", "format": "pendek", "visual": "foto", "wajib": ["sumber"], "ingat": 180,
-             "isi": "petuah sufi (bukan ayat Al-Qur'an atau hadis) dari sumber kitab yang jelas (mis. Al-Hikam Ibnu "
-                    "'Athaillah, Ihya' al-Ghazali, Matsnawi Rumi terjemahan kredibel); jika sumbernya tidak jelas, "
-                    "pilih petuah lain. Gambar: kaligrafi atau foto tempat (masjid, makam Mevlana, lanskap) dengan "
-                    "overlay — BUKAN gambar tokoh. Hindari isu khilafiyah/sektarian"},
+    "ujum": {"nama": "Petuah Islami", "format": "pendek", "visual": "foto", "wajib": ["sumber"], "ingat": 180,
+             "isi": "petuah sufi atau tokoh Islam terkenal (mis. Ibnu 'Athaillah, al-Ghazali, Rumi, Hasan al-Bashri, "
+                    "Imam Syafi'i, Ibnu Qayyim, Buya Hamka) dari sumber yang jelas (kitab/buku); jika sumbernya tidak "
+                    "jelas, pilih petuah lain. DILARANG ayat Al-Qur'an dan hadis — termasuk 'keutamaan hari Jumat' "
+                    "dari hadis; jangan mengutip sabda Nabi atau firman, dan jangan membuka dengan dalil (`simpan` "
+                    "menolak penanda seperti HR., QS., Rasulullah, sabda, hadis, ayat). Gambar: kaligrafi atau foto "
+                    "tempat (masjid, makam Mevlana, lanskap) dengan overlay — BUKAN gambar tokoh. Hindari isu "
+                    "khilafiyah/sektarian"},
     "usab": {"nama": "Fun Fact Wisata", "format": "pendek", "visual": "foto", "wajib": ["sumber"], "ingat": 180,
              "isi": "fun fact wisata/geografi (negara terkecil, rekor dunia, keajaiban alam); rekor dicek dengan "
                     "sumber terbaru. Foto tempatnya dengan overlay"},
@@ -231,6 +234,14 @@ def jam_slot(slot: str, s: dict = None) -> str:
     return (s or {}).get("jadwal") or "menunggu instruksi"
 BATAS = 500
 BATAS_POLLING = 25  # panjang pilihan polling di aplikasi Threads
+# Permintaan pemilik: konten terjadwal tanpa ayat Al-Qur'an dan hadis (penanda kutipan dalil).
+DALIL = re.compile(
+    r"\bH\.?\s?R\.?\s+(?:al-)?(?:Bukhari|Muslim|Abu|Tirmidzi|Tirmizi|Ahmad|Ibnu|Ibn|Nasa'?i|Thabrani|Baihaqi|"
+    r"Hakim|Malik|Daruquthni|Darimi|Muttafaq)"                       # HR. Muslim, HR Bukhari
+    r"|\bQ\.?\s?S\.?\s*(?:[A-Z][\w'-]*[\s.]*)*\(?\d+\)?\s*:\s*\d+"      # QS. Al-Baqarah 2:286, QS 2:286
+    r"|\bQ\.?\s?S\.?\s+(?:A[dlnrstz]|Yasin|Yusuf|Maryam|Ibrahim|Luqman|Th?aha|Hud|Yunus|Muhammad)[\s-]"  # QS. Al-…
+    r"|ﷺ|ﷻ|\bRasulullah\b|\bNabi\s+(?:Muhammad\s+)?(?:SAW|bersabda)\b|\bsabda\b|\bberfirman\b"
+    r"|\bhadit?s\b|\bal-?qur'?an\b|\bsurah\b|\bayat\b", re.I)
 DATA = Path(os.path.expanduser(os.environ.get(
     "KONTEN_DATA_DIR", "~/.openclaw/workspace/konten-threads/antrian")))
 
@@ -316,6 +327,10 @@ def validasi_rubrik(o: dict, slot: str, idx: int) -> list:
         err.append(f"opsi {idx}: rubrik {nama} — postingan 1 wajib memuat URL berita")
     if "sumber" in r["wajib"] and not [u for u in o.get("sumber") or [] if str(u).startswith("http")]:
         err.append(f"opsi {idx}: rubrik {nama} — isi 'sumber' dengan URL yang dibaca")
+    dalil = next((m.group(0) for t in o["posts"] for m in [DALIL.search(t)] if m), None)
+    if dalil:
+        err.append(f"opsi {idx}: konten terjadwal tidak boleh memuat ayat Al-Qur'an atau hadis (ditemukan "
+                   f"\"{dalil}\") — pakai petuah ulama/sufi/tokoh Islam, bukan dalil")
     if r["visual"] == "tanpa" and o.get("gambar"):
         err.append(f"opsi {idx}: rubrik {nama} tanpa gambar — hapus 'gambar'")
     if "polling" in r["wajib"]:

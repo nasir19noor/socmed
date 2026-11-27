@@ -10,7 +10,7 @@ Kedua akun posting OTOMATIS, tanpa usulan:
 @nasir19noor (utama) — personal & pengetahuan, 5 rubrik harian + 1 rubrik mingguan
   09.00 Berita & Dampak · 12.30 Kisah Tokoh · 15.00 Kutipan Lucu · 17.00 Fun Fact · 19.30 Penjelasan Teknologi
   Sen 10.30 Pepatah Jawa · Sel 10.30 Tips & Trik · Rab 10.30 Kuliner · Kam 10.20 Polling
-  Jum 09.40 Petuah Sufi · Sab 09.23 Fun Fact Wisata · Min 09.47 Psikologi & Parenting
+  Jum 09.40 Petuah Islami · Sab 09.23 Fun Fact Wisata · Min 09.47 Psikologi & Parenting
 
 60/30 mnt sebelum slot cron "buat"    → baca rubrik → riset → 1 konten + visual → langsung disetujui (tanpa WA)
 jam slot               cron "posting" → diposting ke akun slotnya → tautan ke WA
@@ -173,6 +173,39 @@ Bot lalu mengirim 2 opsi. Balas `OK 1` untuk menyetujui, dan konten akan diposti
 | @lantip.ai.id (`bisnis`) | teknologi (AI, cloud, DevOps, keamanan, software); bisnis hanya sebagai sisi bisnis teknologi | 7×, satu rubrik per slot (tabel di bawah) | 60 menit sebelum utas panjang, 30 menit sebelum pendek |
 | @nasir19noor (`utama`) | personal & pengetahuan (rubrik di bawah) | 6×: 5 slot harian + 1 slot mingguan | 60 menit sebelum utas panjang, 30 menit sebelum pendek |
 
+### Jadwal gabungan kedua akun (WIB, urut jam)
+
+Setiap hari: 7 posting @lantip.ai.id + 6 posting @nasir19noor (5 harian + 1 sesuai harinya) = **13 posting**.
+Format: **utas** = utas panjang 4–7 postingan (@nasir19noor: boleh jadi pendek bila bahannya sedikit), **pendek** =
+1 postingan. Jam di kurung = jam konten dibuat (cron "Threads buat").
+
+| Jam posting | Hari | @lantip.ai.id (`bisnis`) | @nasir19noor (`utama`) |
+|---|---|---|---|
+| 08.00 | setiap hari | `jam08` Deep Dive · utas (07.00) | |
+| 09.00 | setiap hari | | `u09` Berita & Dampak · utas · tanpa gambar, URL (08.00) |
+| 09.23 | Sabtu | | `usab` Fun Fact Wisata · pendek (08.53) |
+| 09.40 | Jumat | | `ujum` Petuah Islami · pendek (09.10) |
+| 09.47 | Minggu | | `umin` Psikologi & Parenting · utas (08.47) |
+| 10.00 | setiap hari | `jam10` Kisah Fiktif · utas (09.00) | |
+| 10.20 | Kamis | | `ukam` Polling · pendek · tanpa gambar (09.50) |
+| 10.30 | Senin | | `usen` Pepatah Jawa · pendek (10.00) |
+| 10.30 | Selasa | | `usel` Tips & Trik · utas (09.30) |
+| 10.30 | Rabu | | `urab` Kuliner · utas (09.30) |
+| 12.00 | setiap hari | `jam12` Fun Fact · pendek (11.30) | |
+| 12.30 | setiap hari | | `u1230` Kisah Tokoh · utas (11.30) |
+| 14.00 | setiap hari | `jam14` Kutipan Tokoh · pendek (13.30) | |
+| 15.00 | setiap hari | | `u15` Kutipan Lucu · pendek (14.30) |
+| 16.00 | setiap hari | `jam16` Kisah Nyata · utas (15.00) | |
+| 17.00 | setiap hari | | `u17` Fun Fact · pendek (16.30) |
+| 18.00 | setiap hari | `jam18` Tips & Trik · pendek (17.30) | |
+| 19.30 | setiap hari | | `u1930` Penjelasan Teknologi · utas (18.30) |
+| 20.00 | setiap hari | `jam20` Berita · pendek · tanpa gambar, URL (19.30) | |
+| 21.00 | Minggu | laporan mingguan (WA) | laporan mingguan (WA) |
+| 23.00 | setiap hari | hapus gambar di server (GitHub Actions) | hapus gambar di server (GitHub Actions) |
+
+Sumber kebenaran jadwal adalah `antrian.py` (`JADWAL`, `HARI`, `RUBRIK`); cek versi terkini di server dengan
+`jalankan antrian jadwal`. Jika jadwal di kode berubah, perbarui tabel ini juga.
+
 Rubrik @lantip.ai.id (`antrian.RUBRIK`; lihat dengan `jalankan antrian jadwal`):
 
 | Jam | Slot | Rubrik | Format | Gambar |
@@ -207,7 +240,7 @@ membuat 1 postingan pendek. Menit ganjil disengaja.
 | Selasa | 10.30 | `usel` | Tips & Trik teknologi | panjang\* | foto + overlay |
 | Rabu | 10.30 | `urab` | Kuliner (sejarah/fungsi bumbu, dsb.) | panjang\* | foto + overlay |
 | Kamis | 10.20 | `ukam` | Polling teknologi (2–4 pilihan) | pendek | tanpa gambar |
-| Jumat | 09.40 | `ujum` | Petuah Sufi (bukan ayat/hadis, sumber kitab jelas) | pendek | kaligrafi/foto tempat + overlay, bukan tokoh |
+| Jumat | 09.40 | `ujum` | Petuah Islami dari sufi/tokoh Islam (bukan ayat/hadis, sumber kitab jelas) | pendek | kaligrafi/foto tempat + overlay, bukan tokoh |
 | Sabtu | 09.23 | `usab` | Fun Fact Wisata/Geografi | pendek | foto tempat + overlay |
 | Minggu | 09.47 | `umin` | Psikologi, Parenting & Relationship | panjang\* | foto + overlay |
 
